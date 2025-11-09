@@ -57,25 +57,6 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading 
 
   return (
     <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-gray-200">Website Analysis</h3>
-          <button
-            type="button"
-            onClick={() => setManualMode(!manualMode)}
-            className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
-          >
-            {manualMode ? '🔍 Auto-Discover Pages' : '⚙️ Manual URL Selection'}
-          </button>
-        </div>
-        <p className="text-sm text-gray-400">
-          {manualMode
-            ? 'Manually specify which pages to screenshot'
-            : '🚀 Automatically discovers and screenshots the most important pages'
-          }
-        </p>
-      </div>
-
       <form onSubmit={handleSubmit} className="space-y-4">
         {!manualMode ? (
           // Automatic mode - single URL input
@@ -89,11 +70,6 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading 
               disabled={isLoading}
               aria-label="Website URL"
             />
-            <div className="mt-2 p-3 bg-gray-700/50 rounded-md">
-              <p className="text-xs text-gray-300">
-                <span className="text-green-400">✨ Automatic Mode:</span> We'll automatically discover and screenshot the main page plus the 3 most important pages
-              </p>
-            </div>
           </div>
         ) : (
           // Manual mode - multiple URL inputs
@@ -104,7 +80,7 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading 
                   type="text"
                   value={url}
                   onChange={(e) => handleManualUrlChange(index, e.target.value)}
-                  placeholder={index === 0 ? "Enter primary URL for analysis" : "Add another page for screenshot"}
+                  placeholder={index === 0 ? "Enter primary URL" : "Add another page"}
                   className="flex-grow bg-gray-900 border border-gray-600 rounded-md px-4 py-3 text-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition duration-200 outline-none disabled:opacity-50"
                   disabled={isLoading}
                   aria-label={`Website URL ${index + 1}`}
@@ -129,31 +105,32 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading 
               <button
                 type="button"
                 onClick={addUrlInput}
-                className="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50"
+                className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
                 disabled={isLoading}
               >
-                + Add Another Page
+                + Add another page
               </button>
             )}
           </>
         )}
 
-        <button
-          type="submit"
-          className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center"
-          disabled={isLoading || (!manualMode && !url.trim()) || (manualMode && urls.filter(u => u.trim()).length === 0)}
-        >
-          {isLoading ? 'Analyzing...' : '🎯 Extract Styles & Screenshots'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setManualMode(!manualMode)}
+            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+            disabled={isLoading}
+          >
+            {manualMode ? 'Auto-discover pages' : 'Manual selection'}
+          </button>
 
-        <div className="text-xs text-gray-500 mt-3 space-y-1">
-          {manualMode ? (
-            <p>Style analysis is performed on the first URL. Screenshots will be taken for all provided URLs.</p>
-          ) : (
-            <p>
-              <span className="text-green-400">🤖 Smart Discovery:</span> Automatically analyzes navigation and finds the most important pages to screenshot
-            </p>
-          )}
+          <button
+            type="submit"
+            className="flex-1 bg-gradient-to-r from-primary to-indigo-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+            disabled={isLoading || (!manualMode && !url.trim()) || (manualMode && urls.filter(u => u.trim()).length === 0)}
+          >
+            {isLoading ? 'Analyzing...' : 'Extract Styles'}
+          </button>
         </div>
       </form>
     </div>

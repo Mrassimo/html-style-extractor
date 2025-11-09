@@ -13,7 +13,7 @@ type Tab = 'report' | 'prompts';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loadingMessage, setLoadingMessage] = useState<string>('Analyzing website...');
+  const [loadingMessage, setLoadingMessage] = useState<string>('Analyzing...');
   const [styleData, setStyleData] = useState<StyleData | null>(null);
   const [markdownResult, setMarkdownResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,36 +27,19 @@ const App: React.FC = () => {
 
   const handleExtract = useCallback(async (urls: string[]) => {
     setIsLoading(true);
-    setLoadingMessage('🔍 Discovering important pages...');
+    setLoadingMessage('Analyzing...');
     setStyleData(null);
     setMarkdownResult(null);
     setError(null);
     setActiveTab('report');
 
     try {
-      // Add console log override to capture discovery progress
-      const originalLog = console.log;
-      console.log = (message: string, ...args: any[]) => {
-        if (message.includes('🔍 Discovering important pages')) {
-          setLoadingMessage('🔍 Discovering important pages...');
-        } else if (message.includes('📸 Will screenshot')) {
-          const pageCount = args[0] as number;
-          setLoadingMessage(`📸 Taking screenshots of ${pageCount} pages...`);
-        }
-        originalLog(message, ...args);
-      };
-
       const data = await extractAllStyles(urls);
-
-      // Restore original console.log
-      console.log = originalLog;
-
-      setLoadingMessage('📝 Generating style report...');
       const markdown = formatAsMarkdown(data);
 
       setStyleData(data);
       setMarkdownResult(markdown);
-      showNotification('✅ Analysis complete! Found styles and screenshots.');
+      showNotification('Analysis complete!');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       let detailedError = `Extraction failed: ${errorMessage}.`;
@@ -64,10 +47,9 @@ const App: React.FC = () => {
           detailedError += ' This might be due to a network issue, the CORS proxy not working, or the target website blocking requests. Please check your connection and try again or use a different URL.';
       }
       setError(detailedError);
-      showNotification('❌ Analysis failed!');
+      showNotification('Analysis failed!');
     } finally {
       setIsLoading(false);
-      setLoadingMessage('Analyzing website...');
     }
   }, []);
 
