@@ -109,8 +109,8 @@ const createMockScreenshot = (url: string, isVercelLimitation = false): Screensh
     </svg>
   `.trim();
 
-  // Use a safer encoding method that handles Unicode characters
-  const encodedSvg = btoa(unescape(encodeURIComponent(svgContent)));
+  // Use a safer encoding method that handles Unicode characters in the browser
+  const encodedSvg = btoa(new TextEncoder().encode(svgContent).reduce((data, byte) => data + String.fromCharCode(byte), ''));
 
   return {
     url: `data:image/svg+xml;base64,${encodedSvg}`,
