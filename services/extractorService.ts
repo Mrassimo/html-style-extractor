@@ -84,18 +84,27 @@ const isDevelopment = typeof window !== 'undefined' && (
 );
 
 // Create a placeholder screenshot for development or when screenshot service is unavailable
-const createMockScreenshot = (url: string, isVercelLimitation = false): Screenshot => {
+const createMockScreenshot = (url: string, isVercelLimitation = false, isConfigError = false): Screenshot => {
   const pathname = new URL(url).pathname || '/';
-  const message = isVercelLimitation
-    ? 'Screenshots temporarily unavailable on Vercel'
-    : 'Development mode - screenshots work in production';
+  let message, title;
+
+  if (isConfigError) {
+    message = 'Screenshot service needs API key configuration';
+    title = '⚙️ Configuration Required';
+  } else if (isVercelLimitation) {
+    message = 'Screenshots temporarily unavailable';
+    title = '🚫 Service Unavailable';
+  } else {
+    message = 'Development mode - screenshots work in production';
+    title = '📸 Design System Analysis';
+  }
 
   const svgContent = `
     <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
       <rect width="1200" height="630" fill="#f3f4f6"/>
       <rect x="50" y="50" width="1100" height="530" fill="white" stroke="#e5e7eb" stroke-width="2" rx="8"/>
-      <text x="600" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#374151">
-        Design System Analysis
+      <text x="600" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#374151" font-weight="bold">
+        ${title}
       </text>
       <text x="600" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#6b7280">
         ${pathname}
@@ -106,15 +115,27 @@ const createMockScreenshot = (url: string, isVercelLimitation = false): Screensh
       <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#9ca3af">
         (Design system extraction works perfectly)
       </text>
+      ${isConfigError ? `
+        <text x="600" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">
+          Admin: See SETUP.md for configuration instructions
+        </text>
+      ` : ''}
     </svg>
   `.trim();
 
   // Use a safer encoding method that handles Unicode characters in the browser
   const encodedSvg = btoa(new TextEncoder().encode(svgContent).reduce((data, byte) => data + String.fromCharCode(byte), ''));
 
+  let label = `Full Page: ${pathname}`;
+  if (isConfigError) {
+    label += ' (Setup required)';
+  } else if (isVercelLimitation) {
+    label += ' (Screenshot unavailable)';
+  }
+
   return {
     url: `data:image/svg+xml;base64,${encodedSvg}`,
-    label: `Full Page: ${pathname}${isVercelLimitation ? ' (Screenshot unavailable)' : ''}`
+    label
   };
 };
 
@@ -145,21 +166,24 @@ const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
         if (!response.ok) {
           let errorDetail = '';
           let isVercelLimitation = false;
+          let isConfigError = false;
           try {
             const data = await response.json();
             if (data?.error) {
               errorDetail = ` - ${data.error}`;
-              isVercelLimitation = data?.fallback || data?.message?.includes('Vercel');
+              isVercelLimitation = data?.fallback;
+              isConfigError = data?.setupRequired;
             }
           } catch {
             // Non-JSON response; ignore
           }
           console.warn(`❌ Screenshot failed for ${url}: ${response.status}${errorDetail}`);
 
-          // If it's a Vercel limitation, create a mock screenshot
-          if (isVercelLimitation || response.status === 500) {
-            console.log(`📸 Using mock screenshot due to Vercel limitation for ${url}`);
-            return createMockScreenshot(url, true);
+          // If it's a configuration error or Vercel limitation, create a mock screenshot
+          if (isConfigError || isVercelLimitation || response.status === 500) {
+            const reason = isConfigError ? 'configuration needed' : 'service limitation';
+            console.log(`📸 Using mock screenshot due to ${reason} for ${url}`);
+            return createMockScreenshot(url, isVercelLimitation, isConfigError);
           }
 
           return null;
@@ -178,7 +202,7 @@ const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
 
             if (responseText.includes('Vercel') || responseText.includes('unavailable')) {
               console.log(`📸 Detected Vercel limitation, using mock screenshot for ${url}`);
-              return createMockScreenshot(url, true);
+              return createMockScreenshot(url, true, false);
             }
           } catch {
             // Ignore text parsing errors
