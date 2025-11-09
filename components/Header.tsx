@@ -9,8 +9,9 @@ export const Header: React.FC = () => (
         </svg>
       </div>
       <h1 className="text-4xl sm:text-5xl font-bold text-md-primary">
-        HTML Inline Style Refactor
+        Style Extractor
       </h1>
+      <p className="text-lg font-semibold text-md-muted mt-2">HTML Inline Style Refactor</p>
     </div>
     <p className="text-lg text-md-body max-w-2xl mx-auto leading-relaxed">
       Turn messy inline-styled HTML into clean, reusable CSS utility classes and cleaned HTML output in one click.
