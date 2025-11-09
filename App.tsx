@@ -173,14 +173,7 @@ const App: React.FC = () => {
 
               {/* Cleaned HTML Output */}
               <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-6 space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-bold text-md-primary">Cleaned HTML Output</h2>
-                    <p className="text-xs text-md-muted">
-                      Inline &lt;style&gt; tags and scripts stripped from body. Ready to pair with extracted CSS.
-                    </p>
-                  </div>
-                </div>
+                <h2 className="text-xl font-bold text-md-primary">Cleaned HTML Output</h2>
                 <div className="bg-md-bg-alt rounded-lg border border-md-border p-4">
                   <pre className="text-xs text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
                     <code>{styleData.cleanHtml}</code>

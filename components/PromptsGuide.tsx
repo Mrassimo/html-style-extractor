@@ -11,13 +11,13 @@ const PromptCard: React.FC<{ title: string; description: string; prompt: string;
     return (
         <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border mb-6 overflow-hidden hover:shadow-md-md-btn-primary transition-all duration-300">
             <div className="p-6 bg-md-bg-alt border-b border-md-border">
-                <h3 className="text-lg font-bold text-md-primary mb-2 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-md-primary flex items-center gap-2">
                     <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {title}
                 </h3>
-                <p className="text-sm text-md-muted">{description}</p>
+                {description && <p className="text-sm text-md-muted mt-2">{description}</p>}
             </div>
             <div className="p-6">
                 <div className="bg-md-bg rounded-lg border border-md-border p-4 mb-4">
@@ -82,49 +82,18 @@ Make sure it follows ALL the style guidelines exactly.`
     };
 
     return (
-        <div className="space-y-8">
-            <div className="text-center space-y-4">
-                <h2 className="text-3xl font-bold text-md-primary flex items-center justify-center gap-3">
-                    <svg className="w-8 h-8 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    AI Prompt Workflow
-                </h2>
-                <p className="text-lg text-md-muted max-w-3xl mx-auto leading-relaxed">
-                    Use these curated prompts with AI models (Claude, Gemini, or ChatGPT) along with the generated analysis to replicate and build upon extracted design systems.
-                </p>
-                <div className="flex items-center justify-center space-x-8 text-sm text-md-muted">
-                    <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-md-green rounded-full"></div>
-                        <span>Step-by-step guidance</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-md-blue rounded-full"></div>
-                        <span>Design system focused</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-md-orange rounded-full"></div>
-                        <span>Production ready</span>
-                    </div>
-                </div>
-            </div>
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-md-primary flex items-center gap-2">
+                <svg className="w-6 h-6 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                AI Prompts
+            </h2>
 
             <div className="space-y-6">
-                <PromptCard title="Step 1: Create Initial Page" description="Use the 'Copy All' button from the Analysis Report tab to get the complete data, then use this prompt." prompt={styleData ? prompts.step1 : prompts.prompt1} onCopy={handleCopy} />
-                <PromptCard title="Step 2: Generate a Style Guide" description="Once the replication is accurate, have the AI document the design system using this contextual prompt." prompt={styleData ? prompts.step2 : prompts.prompt2} onCopy={handleCopy} />
-                <PromptCard title="Step 3: Use Your Style Guide" description="Create new pages and components that are consistent with the original design system." prompt={styleData ? prompts.step3 : prompts.prompt3} onCopy={handleCopy} />
-            </div>
-
-            <div className="bg-md-yellow border border-md-orange rounded-lg p-6 text-center">
-                <div className="flex items-center justify-center space-x-3 mb-3">
-                    <svg className="w-6 h-6 text-md-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 className="font-bold text-md-primary">Pro Tip</h3>
-                </div>
-                <p className="text-sm text-md-body">
-                    Always include the complete analysis output from the "Copy All" button for best results. The AI needs both the visual context (screenshots) and the technical details (HTML/CSS).
-                </p>
+                <PromptCard title="Step 1: Create Initial Page" description="" prompt={styleData ? prompts.step1 : prompts.prompt1} onCopy={handleCopy} />
+                <PromptCard title="Step 2: Generate a Style Guide" description="" prompt={styleData ? prompts.step2 : prompts.prompt2} onCopy={handleCopy} />
+                <PromptCard title="Step 3: Use Your Style Guide" description="" prompt={styleData ? prompts.step3 : prompts.prompt3} onCopy={handleCopy} />
             </div>
         </div>
     );
