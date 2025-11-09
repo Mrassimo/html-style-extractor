@@ -11,8 +11,91 @@
         theme: {
           extend: {
             colors: {
-              'primary': '#4f46e5',
-              'secondary': '#10b981',
+              // MotherDuck Color Palette
+              'md-primary': '#383838',      // Primary text, icons, outlines
+              'md-black': '#000000',        // High-contrast elements
+              'md-white': '#ffffff',        // Cards, panels, surfaces
+              'md-bg': '#f4efea',           // Main page background
+              'md-bg-alt': '#f8f8f7',       // Alternate background
+              'md-bg-light': '#f1f1f1',     // Very light neutral
+
+              // Brand/Accent Colors
+              'md-orange': '#ff9538',       // Primary CTA background
+              'md-orange-hover': '#ffb26a', // Orange hover state
+              'md-yellow': '#ffde00',       // Highlight/promo background
+              'md-blue': '#6fc2ff',         // Large CTA band background
+              'md-blue-focus': '#2ba5ff',   // Focus & accent blue
+              'md-blue-light': '#ebf9ff',   // Light blue panel background
+              'md-green': '#53dbc9',        // Success/active dot
+              'md-green-dark': '#16aa98',   // Decorative green
+
+              // Supporting Colors
+              'md-muted': '#a1a1a1',        // Secondary text, labels
+              'md-body': '#555555',         // Body copy
+              'md-footer-secondary': '#768390', // Footer secondary text
+              'md-footer-body': '#adbac7',  // Footer body text
+              'md-footer-bg': '#22272e',    // Dark footer background
+              'md-border-light': 'rgba(56, 56, 56, 0.08)', // Ultra-light border
+              'md-border': 'rgba(56, 56, 56, 0.15)', // Standard border
+              'md-border-strong': 'rgba(56, 56, 56, 0.25)', // Strong border
+            },
+            fontFamily: {
+              'sans': ['"Inter"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+              'alt': ['"Open Sans"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+              'mono': ['"Aeonik Mono"', '"SF Mono"', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace'],
+            },
+            fontSize: {
+              'xs': ['11px', { lineHeight: '1.4', letterSpacing: '0.06em' }],
+              'sm': ['13px', { lineHeight: '1.5', letterSpacing: '0.04em' }],
+              'base': ['14px', { lineHeight: '1.5' }],
+              'lg': ['16px', { lineHeight: '1.5' }],
+              'xl': ['18px', { lineHeight: '1.5' }],
+              '2xl': ['24px', { lineHeight: '1.3' }],
+              '3xl': ['32px', { lineHeight: '1.2' }],
+              '4xl': ['40px', { lineHeight: '1.2' }],
+              '5xl': ['56px', { lineHeight: '1.1' }],
+              '6xl': ['72px', { lineHeight: '1.05' }],
+            },
+            fontWeight: {
+              'light': '300',
+              'normal': '400',
+              'medium': '500',
+              'semibold': '600',
+              'bold': '700',
+            },
+            spacing: {
+              '18': '4.5rem',   // 72px
+              '20': '5rem',     // 80px
+              '30': '7.5rem',   // 120px
+            },
+            borderRadius: {
+              'md': '14px',
+              'lg': '18px',
+              'xl': '24px',
+              'pill': '9999px',
+            },
+            boxShadow: {
+              'md-soft': '0 12px 32px rgba(0, 0, 0, 0.08)',
+              'md-btn-primary': '0 10px 24px rgba(0, 0, 0, 0.16)',
+              'md-btn-primary-hover': '0 14px 32px rgba(0, 0, 0, 0.2)',
+              'md-btn-secondary': '0 10px 24px rgba(0, 0, 0, 0.12)',
+              'md-btn-ghost': '0 8px 18px rgba(0, 0, 0, 0.06)',
+              'md-focus': '0 0 0 3px rgba(43, 165, 255, 0.18)',
+            },
+            animation: {
+              'float': 'float 6s ease-in-out infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'slide-up': 'slideUp 0.3s ease-out',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-10px)' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(100%)', opacity: '0' },
+                '100%': { transform: 'translateY(0%)', opacity: '1' },
+              }
             }
           }
         }
@@ -29,7 +112,7 @@
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-gray-900 text-gray-100">
+  <body class="bg-md-bg text-md-primary font-sans antialiased">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
