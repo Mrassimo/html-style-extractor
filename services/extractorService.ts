@@ -190,15 +190,105 @@ export const extractAllStyles = async (urls: string[]): Promise<StyleData> => {
 
   await Promise.all(stylesheetPromises);
 
+  // New: inline-style-to-class extraction with prefix + class application
+  interface InlineStyleExtractionResult {
+    cleanedHtml: string;
+    generatedCss: string;
+    inlineStyleCount: number;
+  }
+
+  const extractInlineStylesToClasses = (
+    root: HTMLElement,
+    classPrefix: string
+  ): InlineStyleExtractionResult => {
+    const styleToClass = new Map<string, string>();
+    const classToStyle = new Map<string, string>();
+    let counter = 1;
+    let inlineCount = 0;
+
+    const normalizeStyle = (style: string): string => {
+      return style
+        .split(';')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .sort()
+        .join('; ');
+    };
+
+    const getOrCreateClassName = (normalized: string): string => {
+      const existing = styleToClass.get(normalized);
+      if (existing) return existing;
+      const className = `${classPrefix}${counter++}`;
+      styleToClass.set(normalized, className);
+      classToStyle.set(className, normalized);
+      return className;
+    };
+
+    const walk = (node: Element) => {
+      if (node.hasAttribute('style')) {
+        const raw = node.getAttribute('style') || '';
+        const normalized = normalizeStyle(raw);
+        if (normalized) {
+          const className = getOrCreateClassName(normalized);
+          const existingClass = node.getAttribute('class') || '';
+          const classes = existingClass
+            .split(/\s+/)
+            .filter(Boolean);
+          if (!classes.includes(className)) {
+            classes.push(className);
+          }
+          node.setAttribute('class', classes.join(' '));
+          node.removeAttribute('style');
+          inlineCount++;
+        }
+      }
+      Array.from(node.children).forEach(child => walk(child as Element));
+    };
+
+    walk(root);
+
+    const generatedCss = Array.from(classToStyle.entries())
+      .map(([cls, decl]) => {
+        const safeDecl = decl.endsWith(';') ? decl : decl + ';';
+        return `.${cls} { ${safeDecl} }`;
+      })
+      .join('\n');
+
+    const container = document.createElement('div');
+    container.appendChild(root);
+    const html = container.innerHTML;
+
+    return {
+      cleanedHtml: html,
+      generatedCss,
+      inlineStyleCount: inlineCount,
+    };
+  };
+
+  // Use extraction on cloned body
   let inlineStyleCount = 0;
+  let generatedInlineCss = '';
+  let cleanedBodyHtml = '';
+
+  const bodyClone = doc.body?.cloneNode(true) as HTMLElement | null;
+  if (bodyClone) {
+    // Remove scripts/styles before processing
+    bodyClone.querySelectorAll('script, style').forEach(el => el.remove());
+    const { cleanedHtml, generatedCss, inlineStyleCount: count } =
+      extractInlineStylesToClasses(bodyClone, 'style-');
+    inlineStyleCount = count;
+    generatedInlineCss = generatedCss;
+    cleanedBodyHtml = cleanedHtml;
+  }
+
   const inlineStyles: string[] = [];
   doc.querySelectorAll('[style]').forEach(el => {
     const styleAttr = el.getAttribute('style');
     if (styleAttr) {
-        inlineStyles.push(styleAttr);
-        inlineStyleCount++;
+      inlineStyles.push(styleAttr);
     }
   });
+
   const allCssText = fullCssText + inlineStyles.join(';');
 
   const colors = allCssText.match(/(#[0-9a-f]{3,8}|rgba?\([\d\s,.]+\)|hsla?\([\d\s%,.]+\))/gi) || [];
@@ -237,7 +327,21 @@ export const extractAllStyles = async (urls: string[]): Promise<StyleData> => {
 
   const headContent = doc.head?.innerHTML || '';
 
-  const styleData: Omit<StyleData, 'cleanHtml'> = {
+  // Truncate cleaned HTML safely
+  let cleanHtml: string;
+  if (cleanedBodyHtml) {
+    cleanHtml = cleanedBodyHtml;
+    if (cleanHtml.length > HTML_TRUNCATE_LENGTH) {
+      cleanHtml =
+        cleanHtml.substring(0, HTML_TRUNCATE_LENGTH) +
+        '\n...<!-- TRUNCATED -->';
+    }
+  } else {
+    cleanHtml =
+      '<!-- Could not find a <body> element in the document. -->';
+  }
+
+  const styleData: StyleData = {
     pageTitle: doc.title || 'Untitled Page',
     pageUrl: analysisUrl,
     stylesheetCount: fetchedCssRules.length,
@@ -256,23 +360,9 @@ export const extractAllStyles = async (urls: string[]): Promise<StyleData> => {
     cssRules: fetchedCssRules,
     headContent,
     screenshots,
-  };
-
-  const bodyClone = doc.body?.cloneNode(true) as HTMLElement;
-  let cleanHtml: string;
-
-  if (bodyClone) {
-    bodyClone.querySelectorAll('script, style').forEach(el => el.remove());
-    cleanHtml = bodyClone.outerHTML;
-    if (cleanHtml.length > HTML_TRUNCATE_LENGTH) {
-        cleanHtml = cleanHtml.substring(0, HTML_TRUNCATE_LENGTH) + '\n...<!-- TRUNCATED -->';
-    }
-  } else {
-    cleanHtml = '<!-- Could not find a <body> element in the document. -->';
-  }
-
-  return {
-    ...styleData,
     cleanHtml,
+    generatedInlineCss,
   };
+
+  return styleData;
 };

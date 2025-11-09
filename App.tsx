@@ -9,7 +9,7 @@ import { extractAllStyles } from './services/extractorService';
 import { formatAsMarkdown } from './services/markdownFormatter';
 import { StyleData } from './types';
 
-type Tab = 'report' | 'prompts';
+type Tab = 'report' | 'prompts' | 'cleanedHtml';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -25,6 +25,16 @@ const App: React.FC = () => {
   const showNotification = (message: string) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleClearAll = () => {
+    setStyleData(null);
+    setMarkdownResult(null);
+    setError(null);
+    setNotification(null);
+    setHideExtractButton(false);
+    setLastAnalyzedUrl('');
+    setActiveTab('report');
   };
 
   const handleExtract = useCallback(async (urls: string[]) => {
@@ -79,11 +89,11 @@ const App: React.FC = () => {
         <Header />
         <main className="space-y-8">
           <UrlInputForm
-          onSubmit={handleExtract}
-          isLoading={isLoading}
-          hideButton={hideExtractButton}
-          onUrlChange={handleUrlChange}
-        />
+            onSubmit={handleExtract}
+            isLoading={isLoading}
+            hideButton={hideExtractButton}
+            onUrlChange={handleUrlChange}
+          />
           {isLoading && <Loader message={loadingMessage} />}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 shadow-md">
@@ -102,27 +112,73 @@ const App: React.FC = () => {
           )}
           {styleData && markdownResult && (
             <div className="space-y-6">
-                <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-1">
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-1">
-                        <TabButton tab="report" label="Analysis Report" />
-                        <TabButton tab="prompts" label="AI Prompts" />
-                    </div>
+              <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-1">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-1">
+                  <TabButton tab="report" label="Analysis Report" />
+                  <TabButton tab="cleanedHtml" label="Cleaned HTML Output" />
+                  <TabButton tab="prompts" label="AI Prompts" />
                 </div>
+              </div>
 
-                {activeTab === 'report' && (
-                    <ResultsDisplay
-                        data={styleData}
-                        onCopySuccess={() => showNotification('Copied complete analysis to clipboard!')} />
-                )}
-                {activeTab === 'prompts' && (
-                    <PromptsGuide onCopySuccess={() => showNotification('Prompt copied!')} styleData={styleData} />
-                )}
+              {activeTab === 'report' && (
+                <ResultsDisplay
+                  data={styleData}
+                  onCopySuccess={() => showNotification('Copied complete analysis to clipboard!')}
+                />
+              )}
+
+              {activeTab === 'cleanedHtml' && (
+                <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-6 space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-xl font-bold text-md-primary">Cleaned HTML Output</h2>
+                      <p className="text-xs text-md-muted">
+                        Inline <style> tags and scripts stripped from body. Ready to pair with extracted CSS.
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!styleData?.cleanHtml) return;
+                        try {
+                          await navigator.clipboard.writeText(styleData.cleanHtml);
+                          showNotification('Cleaned HTML copied to clipboard!');
+                        } catch (err) {
+                          console.error('Failed to copy cleaned HTML', err);
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-md-white font-bold text-[10px] uppercase tracking-wide py-2 px-4 rounded-lg border border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
+                    >
+                      <span>Copy Cleaned HTML</span>
+                    </button>
+                  </div>
+                  <div className="bg-md-bg-alt rounded-lg border border-md-border p-4">
+                    <pre className="text-xs text-md-body whitespace-pre-wrap break-words overflow-auto max-h-[70vh] font-mono leading-relaxed">
+                      <code>{styleData.cleanHtml}</code>
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'prompts' && (
+                <PromptsGuide
+                  onCopySuccess={() => showNotification('Prompt copied!')}
+                  styleData={styleData}
+                />
+              )}
             </div>
           )}
         </main>
         <footer className="mt-20 pt-12 border-t border-md-border">
-          <div className="text-center">
-            <p className="text-md-muted text-sm">HTML Style Extractor for LLMs. All processing is done locally in your browser.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-md-muted">
+            <p>HTML Inline Style Refactor. All processing is done locally in your browser.</p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleClearAll}
+                className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wide border border-md-border rounded-lg text-md-muted hover:text-md-primary hover:border-md-primary hover:bg-md-bg-alt transition-all duration-200"
+              >
+                Clear All
+              </button>
+            </div>
           </div>
         </footer>
       </div>

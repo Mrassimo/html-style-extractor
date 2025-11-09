@@ -159,18 +159,22 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
           )}
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-md-primary flex items-center gap-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
-                Design Analysis & AI Prompts
-              </h3>
-              <div className="flex items-center gap-2 text-xs text-md-muted">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span>Text analysis with integrated prompts</span>
+                <h3 className="text-xl font-bold text-md-primary">
+                  Design Analysis & AI Prompts
+                </h3>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-[10px] text-md-muted">
+                <span className="px-2 py-1 rounded-full bg-md-bg-alt border border-md-border">
+                  Complete text-only report
+                </span>
+                <span className="px-2 py-1 rounded-full bg-md-bg-alt border border-md-border">
+                  Includes cleaned HTML + generated CSS classes
+                </span>
               </div>
             </div>
 
@@ -205,7 +209,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                   )}
                 </button>
 
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-3 flex-wrap">
                   <button
                     onClick={() => handleCopyText(textOnlyOutput)}
                     className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
@@ -214,6 +218,24 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                     <CopyIcon />
                     <span>Copy Analysis</span>
                   </button>
+                  <button
+                    onClick={() => handleCopyText(data.cleanHtml)}
+                    className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
+                    title="Copy Cleaned HTML"
+                  >
+                    <CopyIcon />
+                    <span>Copy Cleaned HTML</span>
+                  </button>
+                  {data.generatedInlineCss && (
+                    <button
+                      onClick={() => handleCopyText(data.generatedInlineCss)}
+                      className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
+                      title="Copy Generated CSS Classes"
+                    >
+                      <CopyIcon />
+                      <span>Copy CSS Classes</span>
+                    </button>
+                  )}
                   {copied && (
                     <span className="text-[10px] text-md-green font-semibold">
                       Copied!

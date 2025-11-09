@@ -26,4 +26,5 @@ export interface StyleData {
   headContent: string;
   cssRules: { url: string; content: string }[];
   screenshots: Screenshot[];
+  generatedInlineCss: string;
 }
