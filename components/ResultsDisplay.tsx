@@ -12,7 +12,6 @@ interface ResultsDisplayProps {
 export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySuccess }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
-  const [copyingScreenshots, setCopyingScreenshots] = useState(false);
   const textOnlyOutput = generateTextOnlyOutput(data);
   const { screenshots } = data;
 
@@ -28,31 +27,17 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
     }
   };
 
-  const handleCopyScreenshots = async () => {
-    if (screenshots.length === 0) return;
-
-    setCopyingScreenshots(true);
+  const handleCopyScreenshotUrl = async (url: string, label: string) => {
     try {
-      // Copy screenshots sequentially with a small delay
-      for (let i = 0; i < screenshots.length; i++) {
-        const shot = screenshots[i];
-        const screenshotText = `Screenshot ${i + 1}: ${shot.label}\n${shot.url}\n${i < screenshots.length - 1 ? '---\n' : ''}`;
-
-        await navigator.clipboard.writeText(screenshotText);
-
-        // Show progress to user
-        onCopySuccess();
-
-        // Small delay between copies (except for the last one)
-        if (i < screenshots.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
+      await navigator.clipboard.writeText(url);
+      onCopySuccess();
     } catch (err) {
-      console.error('Failed to copy screenshots: ', err);
-    } finally {
-      setCopyingScreenshots(false);
+      console.error('Failed to copy screenshot URL: ', err);
     }
+  };
+
+  const handleOpenScreenshot = (url: string) => {
+    window.open(url, '_blank');
   };
 
   const handleDownload = async () => {
@@ -107,30 +92,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
             )}
           </button>
 
-          {screenshots.length > 0 && (
-            <button
-              onClick={handleCopyScreenshots}
-              disabled={copyingScreenshots}
-              className="flex items-center gap-2 bg-md-blue hover:bg-md-blue-focus disabled:bg-md-muted disabled:cursor-not-allowed text-md-white font-bold text-xs uppercase tracking-wide py-3 px-4 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
-              title={`Copy ${screenshots.length} screenshot URLs sequentially`}
-            >
-              {copyingScreenshots ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Copying URLs...</span>
-                </>
-              ) : (
-                <>
-                  <CopyIcon />
-                  <span>Copy Screenshots</span>
-                </>
-              )}
-            </button>
-          )}
-
+          
           <button
             onClick={handleDownload}
             disabled={isDownloading}
@@ -163,18 +125,67 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Page Screenshots
+                    <span className="text-sm font-normal text-md-muted ml-2">(Click to open, right-click to copy URL)</span>
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       {screenshots.map((shot, index) => (
-                          <div key={index} className="bg-md-bg-alt rounded-lg border border-md-border overflow-hidden shadow hover:shadow-md-md-btn-secondary transition-all duration-300 hover:scale-105">
-                              <div className="bg-md-black rounded-t-lg overflow-hidden h-64 flex items-center justify-center">
-                                  <img src={shot.url} alt={shot.label} className="max-w-full max-h-full object-contain" />
+                          <div key={index} className="bg-md-bg-alt rounded-lg border border-md-border overflow-hidden shadow hover:shadow-md-md-btn-secondary transition-all duration-300 hover:scale-105 group">
+                              <div
+                                className="bg-md-black rounded-t-lg overflow-hidden h-64 flex items-center justify-center cursor-pointer relative"
+                                onClick={() => handleOpenScreenshot(shot.url)}
+                                title="Click to open in new tab"
+                              >
+                                  <img src={shot.url} alt={shot.label} className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+
+                                  {/* Overlay with actions */}
+                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                      <div className="flex gap-2">
+                                          <button
+                                              onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleOpenScreenshot(shot.url);
+                                              }}
+                                              className="bg-md-primary hover:bg-md-black text-white p-2 rounded-lg transition-colors"
+                                              title="Open in new tab"
+                                          >
+                                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                              </svg>
+                                          </button>
+                                          <button
+                                              onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleCopyScreenshotUrl(shot.url, shot.label);
+                                              }}
+                                              className="bg-md-blue hover:bg-md-blue-focus text-white p-2 rounded-lg transition-colors"
+                                              title="Copy URL"
+                                          >
+                                              <CopyIcon />
+                                          </button>
+                                      </div>
+                                  </div>
                               </div>
                               <div className="p-4">
-                                <p className="text-center text-xs font-semibold text-md-muted truncate" title={shot.label}>{shot.label}</p>
+                                <p className="text-center text-xs font-semibold text-md-muted truncate mb-2" title={shot.label}>{shot.label}</p>
+                                <div className="text-center">
+                                    <button
+                                        onClick={() => handleCopyScreenshotUrl(shot.url, shot.label)}
+                                        className="text-xs text-md-blue hover:text-md-blue-focus transition-colors flex items-center gap-1 mx-auto"
+                                        title="Copy screenshot URL"
+                                    >
+                                        <CopyIcon />
+                                        Copy URL
+                                    </button>
+                                </div>
                               </div>
                           </div>
                       ))}
+                  </div>
+
+                  <div className="mt-4 p-3 bg-md-yellow border border-md-orange rounded-lg text-center">
+                      <p className="text-sm text-md-body">
+                          💡 <strong>Tip:</strong> Click any screenshot to open it in a new tab, or use the copy button to get the URL for AI uploads
+                      </p>
                   </div>
               </div>
           )}
@@ -200,23 +211,6 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                 <code>{textOnlyOutput}</code>
               </pre>
             </div>
-
-            {screenshots.length > 0 && (
-              <div className="bg-md-yellow border border-md-orange rounded-lg p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <svg className="w-5 h-5 text-md-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <h4 className="font-semibold text-md-primary">Screenshot URLs for AI</h4>
-                </div>
-                <p className="text-sm text-md-body mb-3">
-                  Use the "Copy Screenshots" button to copy screenshot URLs sequentially for AI models
-                </p>
-                <div className="text-xs text-md-muted">
-                  Most AIs need screenshots uploaded separately - use the URLs as references
-                </div>
-              </div>
-            )}
           </div>
       </div>
     </div>
