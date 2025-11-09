@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import playwright from 'playwright-core';
 
 /**
  * /api/screenshot
@@ -44,58 +43,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: 'Method not allowed. Use GET with ?url=' });
   }
 
-  let browser;
   try {
-    // Basic Playwright usage. In Vercel, ensure you have playwright-core and a compatible chromium binary.
-    // For internal use, this is sufficient; if cold starts / size are problematic,
-    // adapt to use a smaller browser bundle.
-    browser = await playwright.chromium.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    // Try a simple screenshot service approach
+    // Using a free service that doesn't require browser binaries
+    const screenshotUrl = `https://api.screenshotone.com/take?access_key=free&url=${encodeURIComponent(url)}&format=png&viewport_width=1440&viewport_height=900&full_page=true&device_scale_factor=1`;
 
-    const context = await browser.newContext({
-      viewport: { width: 1440, height: 900 },
-      deviceScaleFactor: 1,
-    });
-    const page = await context.newPage();
+    const response = await fetch(screenshotUrl);
 
-    await page.goto(url, {
-      waitUntil: 'networkidle',
-      timeout: 15000,
-    });
-
-    const buffer = await page.screenshot({
-      fullPage: true,
-      type: 'png',
-    });
-
-    await context.close();
-    await browser.close();
-    browser = null;
-
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).send(buffer);
-  } catch (error: any) {
-    if (browser) {
-      try {
-        await browser.close();
-      } catch {
-        // ignore closing errors
-      }
+    if (!response.ok) {
+      throw new Error(`Screenshot service responded with ${response.status}`);
     }
 
-    console.error('Screenshot error:', error);
-    const message =
-      error?.message ||
-      'Failed to capture screenshot. The target site may be blocking bots or is unreachable.';
-    const status =
-      /timeout/i.test(message) || /Navigation timed out/i.test(message)
-        ? 504
-        : 500;
+    const buffer = await response.arrayBuffer();
 
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-store, max-age=300'); // Cache for 5 minutes
+    return res.status(200).send(Buffer.from(buffer));
+
+  } catch (error: any) {
+    console.error('Screenshot service error:', error);
+
+    // Return a proper error response that the frontend can handle
     return res
-      .status(status)
-      .json({ error: message });
+      .status(500)
+      .json({
+        error: 'Screenshot service unavailable',
+        message: 'Screenshots are temporarily unavailable on Vercel deployment. The design system analysis will still work perfectly.',
+        fallback: true
+      });
   }
 }

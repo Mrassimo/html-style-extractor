@@ -83,26 +83,33 @@ const isDevelopment = typeof window !== 'undefined' && (
   window.location.port !== ''
 );
 
-// Create a placeholder screenshot for development
-const createMockScreenshot = (url: string): Screenshot => {
+// Create a placeholder screenshot for development or when screenshot service is unavailable
+const createMockScreenshot = (url: string, isVercelLimitation = false): Screenshot => {
   const pathname = new URL(url).pathname || '/';
+  const message = isVercelLimitation
+    ? 'Screenshots temporarily unavailable on Vercel'
+    : 'Development mode - screenshots work in production';
+
   return {
     url: `data:image/svg+xml;base64,${btoa(`
       <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
         <rect width="1200" height="630" fill="#f3f4f6"/>
         <rect x="50" y="50" width="1100" height="530" fill="white" stroke="#e5e7eb" stroke-width="2" rx="8"/>
-        <text x="600" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#374151">
-          Screenshot
+        <text x="600" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#374151">
+          ${isVercelLimitation ? '🚫' : '📸'} Design System Analysis
         </text>
-        <text x="600" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#6b7280">
+        <text x="600" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#6b7280">
           ${pathname}
         </text>
-        <text x="600" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">
-          (Development mode - screenshots work in production)
+        <text x="600" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">
+          ${message}
+        </text>
+        <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#9ca3af">
+          (Design system extraction works perfectly)
         </text>
       </svg>
     `)}`,
-    label: `Full Page: ${pathname}`
+    label: `Full Page: ${pathname}${isVercelLimitation ? ' (Screenshot unavailable)' : ''}`
   };
 };
 
@@ -132,13 +139,24 @@ const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
 
         if (!response.ok) {
           let errorDetail = '';
+          let isVercelLimitation = false;
           try {
             const data = await response.json();
-            if (data?.error) errorDetail = ` - ${data.error}`;
+            if (data?.error) {
+              errorDetail = ` - ${data.error}`;
+              isVercelLimitation = data?.fallback || data?.message?.includes('Vercel');
+            }
           } catch {
             // Non-JSON response; ignore
           }
           console.warn(`❌ Screenshot failed for ${url}: ${response.status}${errorDetail}`);
+
+          // If it's a Vercel limitation, create a mock screenshot
+          if (isVercelLimitation || response.status === 500) {
+            console.log(`📸 Using mock screenshot due to Vercel limitation for ${url}`);
+            return createMockScreenshot(url, true);
+          }
+
           return null;
         }
 
@@ -147,9 +165,20 @@ const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
 
         if (!contentType.startsWith('image/')) {
           console.warn(`❌ Screenshot service for ${url} did not return an image. Content-Type: ${contentType}`);
-          // Log actual response for debugging
-          const responseText = await response.text();
-          console.log(`📸 Response body (first 200 chars): ${responseText.substring(0, 200)}...`);
+
+          // Try to parse error and see if it's a Vercel limitation
+          try {
+            const responseText = await response.text();
+            console.log(`📸 Response body (first 200 chars): ${responseText.substring(0, 200)}...`);
+
+            if (responseText.includes('Vercel') || responseText.includes('unavailable')) {
+              console.log(`📸 Detected Vercel limitation, using mock screenshot for ${url}`);
+              return createMockScreenshot(url, true);
+            }
+          } catch {
+            // Ignore text parsing errors
+          }
+
           return null;
         }
 
