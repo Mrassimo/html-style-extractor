@@ -1,16 +1,19 @@
 import React from 'react';
 import { CopyIcon, DownloadIcon } from './icons';
-import { Screenshot } from '../types';
+import { Screenshot, StyleData } from '../types';
+import { generateCompleteOutput, generateAnalysisPrompt } from '../services/promptGenerator';
 
 interface ResultsDisplayProps {
-  markdown: string;
-  screenshots: Screenshot[];
+  data: StyleData;
   onCopySuccess: () => void;
 }
 
-export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ markdown, screenshots, onCopySuccess }) => {
+export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySuccess }) => {
+  const completeOutput = generateCompleteOutput(data);
+  const { screenshots } = data;
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(markdown).then(() => {
+    navigator.clipboard.writeText(completeOutput).then(() => {
       onCopySuccess();
     }).catch(err => {
       console.error('Failed to copy text: ', err);
@@ -18,34 +21,51 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ markdown, screen
   };
 
   const handleDownload = () => {
-    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const blob = new Blob([completeOutput], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'extracted-styles.md';
+    link.download = 'design-system-analysis-complete.md';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
+  const handleCopyPrompt = () => {
+    const analysisPrompt = generateAnalysisPrompt(data);
+    navigator.clipboard.writeText(analysisPrompt).then(() => {
+      onCopySuccess();
+    }).catch(err => {
+      console.error('Failed to copy prompt: ', err);
+    });
+  };
+
   return (
     <div className="bg-gray-800/50 border border-gray-700 rounded-xl shadow-lg">
       <div className="flex justify-between items-center p-4 bg-gray-800 rounded-t-xl border-b border-gray-700">
-        <h2 className="text-xl font-bold text-gray-200">Extraction Report</h2>
-        <div className="flex gap-2">
+        <h2 className="text-xl font-bold text-gray-200">Complete Design System Analysis</h2>
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={handleCopy}
             className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-md transition duration-200"
-            title="Copy to Clipboard"
+            title="Copy Complete Analysis (Screenshots + HTML + CSS + AI Prompt)"
           >
             <CopyIcon />
-            <span>Copy</span>
+            <span>Copy All</span>
+          </button>
+          <button
+            onClick={handleCopyPrompt}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200"
+            title="Copy AI Analysis Prompt Only"
+          >
+            <CopyIcon />
+            <span>Copy Prompt</span>
           </button>
           <button
             onClick={handleDownload}
             className="flex items-center gap-2 bg-primary hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200"
-            title="Download as Markdown"
+            title="Download Complete Analysis"
           >
             <DownloadIcon />
             <span>Download .md</span>
@@ -69,7 +89,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ markdown, screen
               </div>
           )}
           <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words overflow-auto max-h-[60vh] font-mono bg-gray-900 p-4 rounded-md border border-gray-700">
-            <code>{markdown}</code>
+            <code>{completeOutput}</code>
           </pre>
       </div>
     </div>

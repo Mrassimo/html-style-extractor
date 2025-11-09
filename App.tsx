@@ -83,10 +83,9 @@ const App: React.FC = () => {
                 </div>
 
                 {activeTab === 'report' && (
-                    <ResultsDisplay 
-                        markdown={markdownResult} 
-                        screenshots={styleData.screenshots}
-                        onCopySuccess={() => showNotification('Copied to clipboard!')} />
+                    <ResultsDisplay
+                        data={styleData}
+                        onCopySuccess={() => showNotification('Copied complete analysis to clipboard!')} />
                 )}
                 {activeTab === 'prompts' && (
                     <PromptsGuide onCopySuccess={() => showNotification('Prompt copied!')} />
