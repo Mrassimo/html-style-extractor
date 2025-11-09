@@ -7,9 +7,15 @@ interface GeminiResultDisplayProps {
 }
 
 export const GeminiResultDisplay: React.FC<GeminiResultDisplayProps> = ({ htmlContent, onCopySuccess }) => {
+  const [copied, setCopied] = React.useState(false);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(htmlContent).then(() => {
       onCopySuccess();
+      setCopied(true);
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 1500);
     }).catch(err => {
       console.error('Failed to copy generated HTML: ', err);
     });
@@ -31,7 +37,7 @@ export const GeminiResultDisplay: React.FC<GeminiResultDisplayProps> = ({ htmlCo
     <div className="mt-8 bg-gray-800/50 border border-gray-700 rounded-xl shadow-lg">
       <div className="flex justify-between items-center p-4 bg-gray-800 rounded-t-xl border-b border-gray-700">
         <h2 className="text-xl font-bold text-gray-200">Gemini Replication Preview</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button
             onClick={handleCopy}
             className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-md transition duration-200"
@@ -40,6 +46,11 @@ export const GeminiResultDisplay: React.FC<GeminiResultDisplayProps> = ({ htmlCo
             <CopyIcon />
             <span>Copy HTML</span>
           </button>
+          {copied && (
+            <span className="text-[10px] text-emerald-400 font-semibold">
+              Copied!
+            </span>
+          )}
           <button
             onClick={handleDownload}
             className="flex items-center gap-2 bg-primary hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200"

@@ -58,17 +58,13 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
     }
 
     // Always show suggestions when typing, filter more aggressively
-    let filtered;
-    if (value.length >= 1) {
-      // Search mode: filter on any input, but be more aggressive with 3+ chars
-      filtered = filterSuggestions(suggestions, value);
+    let filtered: UrlSuggestion[] = [];
 
-      // If no matches found, still show some popular suggestions
-      if (filtered.length === 0) {
-        filtered = suggestions.slice(0, 5);
-      }
+    if (value.length >= 1) {
+      // Search mode: filter suggestions based on input
+      filtered = filterSuggestions(suggestions, value);
     } else {
-      // Show top suggestions when empty
+      // Show top suggestions when input is empty
       filtered = suggestions.slice(0, 8);
     }
 
@@ -80,12 +76,16 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
 
   const handleFocus = () => {
     // Show suggestions when input is focused
-    let filtered;
-    if (url.length >= 3) {
+    let filtered: UrlSuggestion[] = [];
+
+    if (url.length >= 1) {
+      // When there's input, show only matching suggestions (no popular fallback)
       filtered = filterSuggestions(suggestions, url);
     } else {
+      // When empty, show default/popular suggestions
       filtered = suggestions.slice(0, 8);
     }
+
     setFilteredSuggestions(filtered);
     setShowSuggestions(true);
     setSelectedIndex(-1);
@@ -109,20 +109,30 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!showSuggestions) return;
 
+    const hasSuggestions = filteredSuggestions.length > 0;
+
     switch (e.key) {
       case 'ArrowDown':
+        if (!hasSuggestions) {
+          // No interactive suggestions to move through
+          return;
+        }
         e.preventDefault();
         setSelectedIndex(prev =>
           prev < filteredSuggestions.length - 1 ? prev + 1 : prev
         );
         break;
       case 'ArrowUp':
+        if (!hasSuggestions) {
+          // No interactive suggestions to move through
+          return;
+        }
         e.preventDefault();
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
         break;
       case 'Enter':
         e.preventDefault();
-        if (selectedIndex >= 0 && selectedIndex < filteredSuggestions.length) {
+        if (hasSuggestions && selectedIndex >= 0 && selectedIndex < filteredSuggestions.length) {
           handleSuggestionSelect(filteredSuggestions[selectedIndex]);
         } else {
           handleSubmit(e);
@@ -148,7 +158,7 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [filteredSuggestions, selectedIndex]);
+  }, []);
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -200,35 +210,60 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
           </div>
 
           {/* Suggestions dropdown */}
-          {showSuggestions && filteredSuggestions.length > 0 && (
+          {showSuggestions && (
             <div className="absolute z-50 w-full mt-2 bg-md-white border border-md-border-strong rounded-lg shadow-md-btn-primary max-h-80 overflow-auto">
-              <div className="p-2 border-b border-md-border">
-                <p className="text-xs font-semibold text-md-muted uppercase tracking-wide">Suggestions</p>
+              <div className="flex items-center justify-between p-2 border-b border-md-border gap-2">
+                <p className="text-xs font-semibold text-md-muted uppercase tracking-wide">
+                  {url.trim().length === 0 ? 'Suggestions' : 'Matches'}
+                </p>
+                {url.trim().length > 0 && (
+                  <span className="text-[10px] text-slate-500">
+                    {filteredSuggestions.length} {filteredSuggestions.length === 1 ? 'match' : 'matches'}
+                  </span>
+                )}
               </div>
-              <ul className="py-2" role="listbox">
-                {filteredSuggestions.map((suggestion, index) => (
-                  <li
-                    key={`${suggestion.url}-${index}`}
-                    className={`px-4 py-3 cursor-pointer transition-all duration-150 flex items-center gap-3 ${
-                      index === selectedIndex
-                        ? 'bg-md-blue-light text-md-primary border-l-4 border-md-blue-focus'
-                        : 'text-md-primary hover:bg-md-bg-alt hover:text-md-primary'
-                    }`}
-                    onClick={() => handleSuggestionSelect(suggestion)}
-                    role="option"
-                    aria-selected={index === selectedIndex}
-                  >
-                    <span className="text-lg flex-shrink-0">{getCategoryIcon(suggestion.category)}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{suggestion.label}</div>
-                      <div className="text-xs text-md-muted truncate font-mono">{suggestion.url}</div>
-                    </div>
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full bg-md-bg-alt ${getCategoryColor(suggestion.category)}`}>
-                      {suggestion.category}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+
+              {filteredSuggestions.length > 0 ? (
+                <ul className="py-2" role="listbox">
+                  {filteredSuggestions.map((suggestion, index) => (
+                    <li
+                      key={`${suggestion.url}-${index}`}
+                      className={`px-4 py-3 cursor-pointer transition-all duration-150 flex items-center gap-3 ${
+                        index === selectedIndex
+                          ? 'bg-md-blue-light text-md-primary border-l-4 border-md-blue-focus'
+                          : 'text-md-primary hover:bg-md-bg-alt hover:text-md-primary'
+                      }`}
+                      onClick={() => handleSuggestionSelect(suggestion)}
+                      role="option"
+                      aria-selected={index === selectedIndex}
+                    >
+                      <span className="text-lg flex-shrink-0">
+                        {getCategoryIcon(suggestion.category)}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          {suggestion.label}
+                        </div>
+                        <div className="text-xs text-md-muted truncate font-mono">
+                          {suggestion.url}
+                        </div>
+                      </div>
+                      <span
+                        className={`text-xs font-semibold px-2 py-1 rounded-full bg-md-bg-alt ${getCategoryColor(
+                          suggestion.category
+                        )}`}
+                      >
+                        {suggestion.category}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : url.trim().length > 0 ? (
+                <div className="py-3 px-4 text-xs text-md-muted flex items-center justify-between gap-3">
+                  <span>No matching sites. Try a full URL or a different term.</span>
+                  <span className="text-[10px] text-slate-500 whitespace-nowrap">(0 matches)</span>
+                </div>
+              ) : null}
             </div>
           )}
         </div>

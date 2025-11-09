@@ -12,6 +12,7 @@ interface ResultsDisplayProps {
 export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySuccess }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [screenshotExpanded, setScreenshotExpanded] = useState<Record<number, boolean>>({});
+  const [copied, setCopied] = useState(false);
   const textOnlyOutput = generateTextOnlyOutput(data);
   const { screenshots } = data;
 
@@ -47,6 +48,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
     try {
       await navigator.clipboard.writeText(text);
       onCopySuccess();
+      setCopied(true);
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 1500);
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
@@ -72,35 +77,77 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                     <span className="text-sm font-normal text-md-muted ml-2">(Click to expand)</span>
                   </h3>
                   <div className="space-y-4">
-                      {screenshots.map((shot, index) => (
-                          <div key={index} className="bg-md-bg-alt rounded-lg border border-md-border overflow-hidden shadow hover:shadow-md-md-btn-secondary transition-all duration-300">
+                      {screenshots.map((shot, index) => {
+                        const isExpanded = !!screenshotExpanded[index];
+                        return (
+                          <div
+                            key={index}
+                            className="bg-md-bg-alt rounded-lg border border-md-border overflow-hidden shadow hover:shadow-md-md-btn-secondary transition-all duration-300"
+                          >
+                            {/* Clickable preview area */}
+                            <div
+                              className={`
+                                bg-md-black p-4 cursor-pointer flex items-center justify-center
+                                overflow-hidden
+                                transition-all duration-300 ease-in-out
+                                ${isExpanded ? 'max-h-[600px]' : 'max-h-[200px]'}
+                              `}
+                              style={{ transitionProperty: 'max-height' }}
+                              onClick={() => handleToggleScreenshot(index)}
+                            >
+                              <img
+                                src={shot.url}
+                                alt={shot.label}
+                                className={`
+                                  max-w-full object-contain
+                                  transition-all duration-300 ease-in-out
+                                  ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-90 translate-y-[2px]'}
+                                `}
+                              />
+                            </div>
+                            {/* Label + expand/collapse control */}
+                            <div className="p-4">
                               <div
-                                className="bg-md-black p-4 cursor-pointer flex items-center justify-center"
-                                onClick={() => handleToggleScreenshot(index)}
-                                style={{ height: screenshotExpanded[index] ? 'auto' : '200px' }}
+                                className={`
+                                  flex items-center justify-between
+                                  transition-all duration-200 ease-in-out
+                                  ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-90 translate-y-[1px]'}
+                                `}
                               >
-                                  <img
-                                    src={shot.url}
-                                    alt={shot.label}
-                                    className={`max-w-full object-contain transition-all duration-300 ${screenshotExpanded[index] ? 'max-h-none' : 'max-h-40'}`}
-                                  />
+                                <p
+                                  className="text-sm font-semibold text-md-primary"
+                                  title={shot.label}
+                                >
+                                  {shot.label}
+                                </p>
+                                <button
+                                  onClick={() => handleToggleScreenshot(index)}
+                                  className="text-xs text-md-blue hover:text-md-blue-focus transition-colors flex items-center gap-1"
+                                >
+                                  <svg
+                                    className={`
+                                      w-4 h-4
+                                      transition-transform duration-300 ease-in-out
+                                      ${isExpanded ? 'rotate-180' : ''}
+                                    `}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 9l-7 7-7-7"
+                                    />
+                                  </svg>
+                                  {isExpanded ? 'Collapse' : 'Expand'}
+                                </button>
                               </div>
-                              <div className="p-4">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm font-semibold text-md-primary" title={shot.label}>{shot.label}</p>
-                                    <button
-                                        onClick={() => handleToggleScreenshot(index)}
-                                        className="text-xs text-md-blue hover:text-md-blue-focus transition-colors flex items-center gap-1"
-                                    >
-                                        <svg className={`w-4 h-4 transition-transform duration-300 ${screenshotExpanded[index] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                        {screenshotExpanded[index] ? 'Collapse' : 'Expand'}
-                                    </button>
-                                </div>
-                              </div>
+                            </div>
                           </div>
-                      ))}
+                        );
+                      })}
                   </div>
 
                   <div className="mt-4 p-3 bg-md-yellow border border-md-orange rounded-lg text-center">
@@ -158,14 +205,21 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                   )}
                 </button>
 
-                <button
-                  onClick={() => handleCopyText(textOnlyOutput)}
-                  className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
-                  title="Copy Analysis & AI Prompts"
-                >
-                  <CopyIcon />
-                  <span>Copy Analysis</span>
-                </button>
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => handleCopyText(textOnlyOutput)}
+                    className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
+                    title="Copy Analysis & AI Prompts"
+                  >
+                    <CopyIcon />
+                    <span>Copy Analysis</span>
+                  </button>
+                  {copied && (
+                    <span className="text-[10px] text-md-green font-semibold">
+                      Copied!
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="mt-4 text-center">
