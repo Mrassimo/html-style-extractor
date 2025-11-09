@@ -1,18 +1,18 @@
 import JSZip from 'jszip';
 import { StyleData, Screenshot } from '../types';
 import { convertImageToBase64 } from './imageUtils';
-import { generateCompleteOutput, generateBasicMarkdown } from './promptGenerator';
+import { generateTextOnlyOutput } from './promptGenerator';
 
 export const createCompleteDownloadPackage = async (data: StyleData): Promise<void> => {
     const zip = new JSZip();
 
     // 1. Add the main analysis markdown file
-    const completeOutput = generateCompleteOutput(data);
-    zip.file('design-system-analysis.md', completeOutput);
+    const textOutput = generateTextOnlyOutput(data);
+    zip.file('design-system-analysis.md', textOutput);
 
-    // 2. Add a simplified version without analysis for quick reference
-    const basicMarkdown = generateBasicMarkdown(data);
-    zip.file('design-data-raw.md', basicMarkdown);
+    // 2. Add raw CSS and HTML data
+    const rawData = generateRawDataOutput(data);
+    zip.file('design-data-raw.md', rawData);
 
     // 3. Add AI prompts file
     const prompts = `
@@ -122,7 +122,7 @@ This package contains a complete analysis of the design system from "${data.page
     } catch (error) {
         console.error('Failed to create ZIP file:', error);
         // Fallback to markdown-only download
-        const blob = new Blob([completeOutput], { type: 'text/markdown;charset=utf-8' });
+        const blob = new Blob([textOutput], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -134,23 +134,68 @@ This package contains a complete analysis of the design system from "${data.page
     }
 };
 
-export const createMarkdownWithBase64Images = async (data: StyleData): Promise<string> => {
-    let markdown = generateCompleteOutput(data);
+const generateRawDataOutput = (data: StyleData): string => {
+    return `# Raw Design System Data
 
-    // Replace screenshot URLs with base64 images
-    for (const screenshot of data.screenshots) {
-        try {
-            const base64Data = await convertImageToBase64(screenshot.url);
-            // Replace the original URL with the base64 data
-            markdown = markdown.replace(
-                new RegExp(`!\\[${screenshot.label}\\]\\(${screenshot.url}\\)`, 'g'),
-                `![${screenshot.label}](${base64Data})`
-            );
-        } catch (error) {
-            console.error(`Failed to convert screenshot to base64: ${screenshot.label}`, error);
-            // Keep original URL if conversion fails
-        }
-    }
+## 📊 CSS Overview
+- **Stylesheets:** ${data.stylesheetCount}
+- **Inline Styles:** ${data.inlineStyleCount}
+- **Inaccessible Sheets:** ${data.inaccessibleSheets}
 
-    return markdown;
+## 🎨 Color Palette (Complete Raw Data)
+${data.colorPalette.map(([color, count]) => `${color}: ${count} occurrences`).join('\n')}
+
+## ✍️ Typography (Complete Raw Data)
+
+### Font Families
+${data.typography.fontFamilies.map(([font, count]) => `${font}: ${count} occurrences`).join('\n')}
+
+### Font Sizes
+${data.typography.fontSizes.map(([size, count]) => `${size}: ${count} occurrences`).join('\n')}
+
+### Font Weights
+${data.typography.fontWeights.map(([weight, count]) => `${weight}: ${count} occurrences`).join('\n')}
+
+### Line Heights
+${data.typography.lineHeights.map(([height, count]) => `${height}: ${count} occurrences`).join('\n')}
+
+## 📐 Spacing Scale (Complete Raw Data)
+${data.spacingScale.map(([spacing, count]) => `${spacing}: ${count} occurrences`).join('\n')}
+
+## 🏗️ Layout Patterns (Complete Raw Data)
+
+### Flexbox Layouts
+${data.layoutPatterns.flex.map(pattern => `
+**${pattern.selector}**
+\`\`\`css
+${pattern.properties.join(';\n')};
+\`\`\`
+`).join('\n')}
+
+### Grid Layouts
+${data.layoutPatterns.grid.map(pattern => `
+**${pattern.selector}**
+\`\`\`css
+${pattern.properties.join(';\n')};
+\`\`\`
+`).join('\n')}
+
+## 🔧 CSS Variables (Complete Raw Data)
+\`\`\`css
+${data.cssVariables.map(([name, value]) => `${name}: ${value};`).join('\n')}
+\`\`\`
+
+## 📄 Complete HTML Structure
+\`\`\`html
+${data.cleanHtml}
+\`\`\`
+
+## 📋 Complete CSS Rules
+${data.cssRules.map(rule => `
+### ${rule.url}
+\`\`\`css
+${rule.content}
+\`\`\`
+`).join('\n')}
+`;
 };
