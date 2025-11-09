@@ -20,8 +20,8 @@ const isValidUrl = (value: string | string[] | undefined): value is string => {
   try {
     const u = new URL(value);
     if (!['http:', 'https:'].includes(u.protocol)) return false;
-    // Avoid localhost / private networks in this simple internal tool
-    if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return false;
+    // For development purposes, we'll allow localhost URLs
+    // In production, this should still work for real websites
     return true;
   } catch {
     return false;

@@ -76,7 +76,12 @@ const parseLayoutPatterns = (cssText: string) => {
 };
 
 // Check if we're in development mode
-const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const isDevelopment = typeof window !== 'undefined' && (
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1' ||
+  window.location.hostname.includes('localhost') ||
+  window.location.port !== ''
+);
 
 // Create a placeholder screenshot for development
 const createMockScreenshot = (url: string): Screenshot => {
@@ -104,17 +109,25 @@ const createMockScreenshot = (url: string): Screenshot => {
 const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
   if (!urls.length) return [];
 
+  // Log environment info for debugging
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'unknown';
+  const isDev = isDevelopment;
+  console.log(`🔍 Screenshot API Debug - Hostname: ${hostname}, Is Dev: ${isDev}, API: ${SCREENSHOT_API}`);
+
   // In development, create mock screenshots
-  if (isDevelopment) {
+  if (isDev) {
     console.log('📸 Development mode: Using mock screenshots');
     return urls.map(url => createMockScreenshot(url));
   }
 
+  console.log('🌐 Production mode: Attempting real screenshots');
   try {
-    const screenshotPromises = urls.map(async (url): Promise<Screenshot | null> => {
+    const screenshotPromises = urls.map(async (url, index): Promise<Screenshot | null> => {
       try {
         const label = `Full Page: ${new URL(url).pathname || '/'}`;
         const endpoint = `${SCREENSHOT_API}?url=${encodeURIComponent(url)}`;
+        console.log(`📸 Attempting screenshot ${index + 1}/${urls.length}: ${endpoint}`);
+
         const response = await fetch(endpoint);
 
         if (!response.ok) {
@@ -125,29 +138,35 @@ const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
           } catch {
             // Non-JSON response; ignore
           }
-          console.warn(`Screenshot failed for ${url}: ${response.status}${errorDetail}`);
+          console.warn(`❌ Screenshot failed for ${url}: ${response.status}${errorDetail}`);
           return null;
         }
 
         const contentType = response.headers.get('content-type') || '';
+        console.log(`📸 Response content-type: ${contentType}`);
+
         if (!contentType.startsWith('image/')) {
-          console.warn(
-            `Screenshot service for ${url} did not return an image. Content-Type: ${contentType}`
-          );
+          console.warn(`❌ Screenshot service for ${url} did not return an image. Content-Type: ${contentType}`);
+          // Log actual response for debugging
+          const responseText = await response.text();
+          console.log(`📸 Response body (first 200 chars): ${responseText.substring(0, 200)}...`);
           return null;
         }
 
         const blob = await response.blob();
+        console.log(`📸 Successfully created blob for ${url}, size: ${blob.size} bytes`);
         const objectUrl = URL.createObjectURL(blob);
         return { url: objectUrl, label };
       } catch (err) {
-        console.warn(`Screenshot error for ${url}:`, err);
+        console.error(`❌ Screenshot error for ${url}:`, err);
         return null;
       }
     });
 
     const results = await Promise.all(screenshotPromises);
     const successfulScreenshots = results.filter((shot): shot is Screenshot => shot !== null);
+
+    console.log(`📸 Screenshots completed: ${successfulScreenshots.length}/${urls.length} successful`);
 
     // If no screenshots succeeded, provide mock screenshots as fallback
     if (successfulScreenshots.length === 0) {
@@ -157,7 +176,7 @@ const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
 
     return successfulScreenshots;
   } catch (error) {
-    console.error('Unexpected error fetching screenshots:', error);
+    console.error('❌ Unexpected error fetching screenshots:', error);
     // Return mock screenshots as fallback
     return urls.map(url => createMockScreenshot(url));
   }
