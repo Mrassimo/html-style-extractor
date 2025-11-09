@@ -75,104 +75,64 @@ const parseLayoutPatterns = (cssText: string) => {
   return layoutPatterns;
 };
 
-// Check if we're in development mode
-const isDevelopment = typeof window !== 'undefined' && (
-  window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1' ||
-  window.location.hostname.includes('localhost') ||
-  window.location.port !== ''
-);
-
-// Create a placeholder screenshot for development
-const createMockScreenshot = (url: string): Screenshot => {
-  const pathname = new URL(url).pathname || '/';
-  const svgContent = `
-    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-      <rect width="1200" height="630" fill="#f3f4f6"/>
-      <rect x="50" y="50" width="1100" height="530" fill="white" stroke="#e5e7eb" stroke-width="2" rx="8"/>
-      <text x="600" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#374151">
-        Design System Analysis
-      </text>
-      <text x="600" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#6b7280">
-        ${pathname}
-      </text>
-      <text x="600" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">
-        Development mode - screenshots work in production
-      </text>
-      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#9ca3af">
-        (Design system extraction works perfectly)
-      </text>
-    </svg>
-  `.trim();
-
-  // Use a safer encoding method that handles Unicode characters in the browser
-  const encodedSvg = btoa(new TextEncoder().encode(svgContent).reduce((data, byte) => data + String.fromCharCode(byte), ''));
-
-  return {
-    url: `data:image/svg+xml;base64,${encodedSvg}`,
-    label: `Full Page: ${pathname}`
-  };
-};
+// We no longer generate placeholders. We only use real screenshots.
+// If something fails, we just skip that screenshot entry.
 
 const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
   if (!urls.length) return [];
 
-  // In development, create mock screenshots
-  if (isDevelopment) {
-    console.log('📸 Development mode: Using mock screenshots');
-    return urls.map(url => createMockScreenshot(url));
-  }
+  const screenshots: Screenshot[] = [];
 
-  console.log('🌐 Production mode: Attempting screenshots via Edge Function');
-  try {
-    const screenshotPromises = urls.map(async (url, index): Promise<Screenshot | null> => {
-      try {
-        const label = `Full Page: ${new URL(url).pathname || '/'}`;
-        const endpoint = `${SCREENSHOT_API}?url=${encodeURIComponent(url)}`;
-        console.log(`📸 Attempting screenshot ${index + 1}/${urls.length}: ${endpoint}`);
+  for (const url of urls) {
+    try {
+      const endpoint = `${SCREENSHOT_API}?url=${encodeURIComponent(url)}`;
+      console.log('📸 Requesting screenshot:', endpoint);
 
-        const response = await fetch(endpoint);
+      const res = await fetch(endpoint);
 
-        if (!response.ok) {
-          console.warn(`❌ Screenshot failed for ${url}: ${response.status}`);
-          return null;
-        }
-
-        const contentType = response.headers.get('content-type') || '';
-        console.log(`📸 Response content-type: ${contentType}`);
-
-        if (!contentType.startsWith('image/')) {
-          console.warn(`❌ Screenshot service for ${url} did not return an image. Content-Type: ${contentType}`);
-          return null;
-        }
-
-        const blob = await response.blob();
-        console.log(`📸 Successfully created blob for ${url}, size: ${blob.size} bytes`);
-        const objectUrl = URL.createObjectURL(blob);
-        return { url: objectUrl, label };
-      } catch (err) {
-        console.error(`❌ Screenshot error for ${url}:`, err);
-        return null;
+      if (!res.ok) {
+        console.warn('❌ Screenshot request failed', {
+          url,
+          status: res.status,
+          statusText: res.statusText,
+        });
+        // Do not add placeholder; just skip.
+        continue;
       }
-    });
 
-    const results = await Promise.all(screenshotPromises);
-    const successfulScreenshots = results.filter((shot): shot is Screenshot => shot !== null);
+      const contentType = res.headers.get('content-type') || '';
 
-    console.log(`📸 Screenshots completed: ${successfulScreenshots.length}/${urls.length} successful`);
+      if (!contentType.startsWith('image/')) {
+        const textSample = (await res.text().catch(() => '')).slice(0, 200);
+        console.warn('❌ Screenshot response is not an image', {
+          url,
+          contentType,
+          bodySample: textSample,
+        });
+        // Skip non-image responses.
+        continue;
+      }
 
-    // If no screenshots succeeded, provide mock screenshots as fallback
-    if (successfulScreenshots.length === 0) {
-      console.log('📸 All screenshots failed, using mock fallbacks');
-      return urls.map(url => createMockScreenshot(url));
+      const blob = await res.blob();
+      if (blob.size === 0) {
+        console.warn('❌ Empty screenshot blob for', url);
+        continue;
+      }
+
+      const objectUrl = URL.createObjectURL(blob);
+      screenshots.push({
+        url: objectUrl,
+        label: `Full Page: ${new URL(url).pathname || '/'}`,
+      });
+    } catch (error) {
+      console.error('❌ Error fetching screenshot for', url, error);
+      // Skip this one; do not create any fallback.
     }
-
-    return successfulScreenshots;
-  } catch (error) {
-    console.error('❌ Unexpected error fetching screenshots:', error);
-    // Return mock screenshots as fallback
-    return urls.map(url => createMockScreenshot(url));
   }
+
+  console.log(`📸 Screenshot summary: ${screenshots.length}/${urls.length} succeeded`);
+
+  return screenshots;
 };
 
 export const extractAllStyles = async (urls: string[]): Promise<StyleData> => {
