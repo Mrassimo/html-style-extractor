@@ -99,11 +99,31 @@ export const filterSuggestions = (suggestions: UrlSuggestion[], query: string): 
 
   const lowerQuery = query.toLowerCase();
 
+  // Enhanced fuzzy matching
   return suggestions
-    .filter(suggestion =>
-      suggestion.url.toLowerCase().includes(lowerQuery) ||
-      suggestion.label.toLowerCase().includes(lowerQuery) ||
-      suggestion.category.toLowerCase().includes(lowerQuery)
-    )
-    .slice(0, 8); // Limit to 8 results
+    .map(suggestion => {
+      const urlMatch = suggestion.url.toLowerCase().includes(lowerQuery);
+      const labelMatch = suggestion.label.toLowerCase().includes(lowerQuery);
+      const categoryMatch = suggestion.category.toLowerCase().includes(lowerQuery);
+
+      // Calculate relevance score
+      let score = 0;
+      if (urlMatch) score += 3; // URL matches are most relevant
+      if (labelMatch) score += 2; // Label matches are relevant
+      if (categoryMatch) score += 1; // Category matches are less relevant
+
+      // Bonus for exact matches
+      if (suggestion.url.toLowerCase() === lowerQuery) score += 10;
+      if (suggestion.label.toLowerCase() === lowerQuery) score += 8;
+
+      // Bonus for starts with
+      if (suggestion.url.toLowerCase().startsWith(lowerQuery)) score += 2;
+      if (suggestion.label.toLowerCase().startsWith(lowerQuery)) score += 2;
+
+      return { suggestion, score };
+    })
+    .filter(item => item.score > 0) // Only show matching suggestions
+    .sort((a, b) => b.score - a.score) // Sort by relevance
+    .slice(0, 8) // Limit to 8 results
+    .map(item => item.suggestion);
 };

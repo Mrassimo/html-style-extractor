@@ -50,10 +50,34 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
     // Notify parent component of URL change
     onUrlChange?.(value);
 
-    // Filter suggestions based on input
-    const filtered = filterSuggestions(suggestions, value);
+    // Always show suggestions when typing, filter more aggressively
+    let filtered;
+    if (value.length >= 3) {
+      // Search mode: filter aggressively on 3+ characters
+      filtered = filterSuggestions(suggestions, value);
+    } else if (value.length > 0) {
+      // Show limited suggestions for 1-2 characters
+      filtered = suggestions.slice(0, 5);
+    } else {
+      // Show top suggestions when empty
+      filtered = suggestions.slice(0, 8);
+    }
+
     setFilteredSuggestions(filtered);
-    setShowSuggestions(value.length > 0 || filtered.length > 0);
+    setShowSuggestions(true); // Always show when typing
+    setSelectedIndex(-1);
+  };
+
+  const handleFocus = () => {
+    // Show suggestions when input is focused
+    let filtered;
+    if (url.length >= 3) {
+      filtered = filterSuggestions(suggestions, url);
+    } else {
+      filtered = suggestions.slice(0, 8);
+    }
+    setFilteredSuggestions(filtered);
+    setShowSuggestions(true);
     setSelectedIndex(-1);
   };
 
@@ -144,8 +168,9 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
             type="url"
             value={url}
             onChange={(e) => handleUrlChange(e.target.value)}
+            onFocus={handleFocus}
             onKeyDown={handleKeyDown}
-            placeholder="Enter website URL (e.g., stripe.com)"
+            placeholder="Enter website URL (e.g., stripe.com) - try typing 'git' or 'design'"
             className="w-full bg-md-white border border-md-border-strong rounded-lg px-4 py-3 text-md-primary placeholder:text-md-muted focus:outline-none focus:ring-2 focus:ring-md-blue-focus focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
             aria-label="Website URL"
