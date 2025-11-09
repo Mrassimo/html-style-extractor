@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { UrlInputForm } from './components/UrlInputForm';
 import { ResultsDisplay } from './components/ResultsDisplay';
-import { PromptsGuide } from './components/PromptsGuide';
 import { Loader } from './components/Loader';
 import { Notification } from './components/Notification';
 import { extractAllStyles } from './services/extractorService';
@@ -165,26 +164,10 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Analysis Report */}
+              {/* Design Analysis */}
               <ResultsDisplay
                 data={styleData}
                 onCopySuccess={() => showNotification('Copied complete analysis to clipboard!')}
-              />
-
-              {/* Cleaned HTML Output */}
-              <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-6 space-y-4">
-                <h2 className="text-xl font-bold text-md-primary">Cleaned HTML Output</h2>
-                <div className="bg-md-bg-alt rounded-lg border border-md-border p-4">
-                  <pre className="text-xs text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
-                    <code>{styleData.cleanHtml}</code>
-                  </pre>
-                </div>
-              </div>
-
-              {/* AI Prompts Guide */}
-              <PromptsGuide
-                onCopySuccess={() => showNotification('Prompt copied!')}
-                styleData={styleData}
               />
             </div>
           )}

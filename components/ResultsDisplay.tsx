@@ -165,6 +165,21 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
               </pre>
             </div>
 
+            <div className="flex items-center gap-2 mt-8">
+              <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              <h3 className="text-xl font-bold text-md-primary">
+                Cleaned HTML Output
+              </h3>
+            </div>
+
+            <div className="bg-md-bg-alt rounded-lg border border-md-border p-6">
+              <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
+                <code>{data.cleanHtml}</code>
+              </pre>
+            </div>
+
             {/* Action Buttons */}
             <div className="bg-md-white rounded-lg border border-md-border p-6">
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
