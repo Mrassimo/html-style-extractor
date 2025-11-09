@@ -182,7 +182,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
                 <div className="bg-md-bg-alt rounded-lg border border-md-border p-4">
-                  <pre className="text-xs text-md-body whitespace-pre-wrap break-words overflow-auto max-h-[70vh] font-mono leading-relaxed">
+                  <pre className="text-xs text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
                     <code>{styleData.cleanHtml}</code>
                   </pre>
                 </div>

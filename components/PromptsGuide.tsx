@@ -21,7 +21,7 @@ const PromptCard: React.FC<{ title: string; description: string; prompt: string;
             </div>
             <div className="p-6">
                 <div className="bg-md-bg rounded-lg border border-md-border p-4 mb-4">
-                    <pre className="text-sm text-md-body whitespace-pre-wrap break-words overflow-auto max-h-[200px] font-mono leading-relaxed">
+                    <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
                         <code>{prompt}</code>
                     </pre>
                 </div>

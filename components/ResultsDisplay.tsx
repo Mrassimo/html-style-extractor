@@ -179,7 +179,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
             </div>
 
             <div className="bg-md-bg-alt rounded-lg border border-md-border p-6">
-              <pre className="text-sm text-md-body whitespace-pre-wrap break-words overflow-auto max-h-[70vh] font-mono leading-relaxed">
+              <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
                 <code>{textOnlyOutput}</code>
               </pre>
             </div>
@@ -213,18 +213,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                   <button
                     onClick={() => handleCopyText(textOnlyOutput)}
                     className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
-                    title="Copy Analysis & AI Prompts"
+                    title="Copy Analysis"
                   >
                     <CopyIcon />
                     <span>Copy Analysis</span>
-                  </button>
-                  <button
-                    onClick={() => handleCopyText(data.cleanHtml)}
-                    className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
-                    title="Copy Cleaned HTML"
-                  >
-                    <CopyIcon />
-                    <span>Copy Cleaned HTML</span>
                   </button>
                   {data.generatedInlineCss && (
                     <button
