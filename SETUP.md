@@ -11,57 +11,51 @@
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
    VITE_CORS_PROXY_URL=https://corsproxy.io/?
-   VITE_SCREENSHOT_API=/api/screenshot
-   SCREENSHOTONE_API_KEY=your_screenshotone_api_key_here
+   VITE_SCREENSHOT_API=/api/screenshot-edge
    ```
 
 ## Vercel Deployment
 
-### Getting ScreenshotOne API Key
+### Edge Function Benefits
 
-1. Go to [https://screenshotone.com/](https://screenshotone.com/)
-2. Sign up for a free account
-3. Get your API key from the dashboard
-4. Add it as environment variable in Vercel:
-
-**Via Vercel Dashboard:**
-1. Go to your project dashboard
-2. Click "Settings" → "Environment Variables"
-3. Add:
-   - Name: `SCREENSHOTONE_API_KEY`
-   - Value: `your_actual_api_key_here`
-   - Environments: Production, Preview, Development
-
-**Via CLI:**
-```bash
-vercel env add SCREENSHOTONE_API_KEY
-```
+✅ **No API keys required** - Uses free screenshot services
+✅ **Faster performance** - Edge Functions run closer to users
+✅ **Better reliability** - No cold start issues
+✅ **Simpler setup** - Just deploy and it works
 
 ### Testing
-
-After setting up the API key:
 
 1. **Local development:**
    ```bash
    npm run dev
-   # Test with a URL like https://example.com
+   # Test with any URL like https://example.com
    ```
 
 2. **Vercel deployment:**
    - Push changes to trigger redeploy
+   - Edge Functions are automatically configured
    - Test the deployed app
-   - Check Vercel function logs if issues occur
+
+### How It Works
+
+The app now uses **Vercel Edge Functions** with multiple free screenshot services:
+
+1. **Primary**: HTMLCSSToImage demo service
+2. **Fallback**: ScreenshotOne (no API key required for basic usage)
+3. **Final fallback**: Mock screenshots with clear messaging
 
 ### Troubleshooting
 
 **Screenshots not working:**
-1. Verify the API key is correctly set in environment variables
-2. Check Vercel function logs for detailed error messages
-3. Ensure the API key has available quota
-4. Test the API key directly: `https://api.screenshotone.com/take?access_key=YOUR_KEY&url=https://example.com`
+1. Check Vercel Edge Function logs
+2. Verify URL is accessible (not blocked by CORS)
+3. Try different target websites
+4. Edge Functions work better with HTTPS URLs
 
-**Common errors:**
-- `402`: Check API key validity and quota
-- `400`: Verify request parameters
-- `429`: Rate limit exceeded, try again later
-- `500`: Check Vercel function logs for details
+**Common issues:**
+- **CORS blocking**: Some sites block external requests
+- **Large pages**: Very complex pages may timeout
+- **Bot protection**: Some sites block automated requests
+- **Network issues**: Try again if service is temporarily down
+
+**Note**: The design system analysis works perfectly even if screenshots fail, so you always get useful results.
