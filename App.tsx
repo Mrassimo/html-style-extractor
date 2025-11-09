@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { UrlInputForm } from './components/UrlInputForm';
 import { ResultsDisplay } from './components/ResultsDisplay';
+import { PromptsGuide } from './components/PromptsGuide';
 import { Loader } from './components/Loader';
 import { Notification } from './components/Notification';
 import { extractAllStyles } from './services/extractorService';
@@ -168,6 +169,12 @@ const App: React.FC = () => {
               <ResultsDisplay
                 data={styleData}
                 onCopySuccess={() => showNotification('Copied complete analysis to clipboard!')}
+              />
+
+              {/* AI Prompts Guide */}
+              <PromptsGuide
+                onCopySuccess={() => showNotification('Prompt copied!')}
+                styleData={styleData}
               />
             </div>
           )}
