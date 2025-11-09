@@ -1,0 +1,16 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
+  "functions": {
+    "api/screenshot.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "env": {
+    "VITE_CORS_PROXY_URL": "https://corsproxy.io/?",
+    "VITE_SCREENSHOT_API": "/api/screenshot"
+  }
+}

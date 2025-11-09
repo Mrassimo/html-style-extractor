@@ -1,0 +1,5 @@
+{
+  "name": "HTML Style Extractor",
+  "description": "A tool to extract comprehensive style information from web pages and format it as markdown optimized for Large Language Models (LLMs).",
+  "requestFramePermissions": []
+}
