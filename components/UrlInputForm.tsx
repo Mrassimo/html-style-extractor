@@ -52,17 +52,20 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
 
     // Always show suggestions when typing, filter more aggressively
     let filtered;
-    if (value.length >= 3) {
-      // Search mode: filter aggressively on 3+ characters
+    if (value.length >= 1) {
+      // Search mode: filter on any input, but be more aggressive with 3+ chars
       filtered = filterSuggestions(suggestions, value);
-    } else if (value.length > 0) {
-      // Show limited suggestions for 1-2 characters
-      filtered = suggestions.slice(0, 5);
+
+      // If no matches found, still show some popular suggestions
+      if (filtered.length === 0) {
+        filtered = suggestions.slice(0, 5);
+      }
     } else {
       // Show top suggestions when empty
       filtered = suggestions.slice(0, 8);
     }
 
+    console.log('Suggestions for query:', value, 'found:', filtered.length); // Debug log
     setFilteredSuggestions(filtered);
     setShowSuggestions(true); // Always show when typing
     setSelectedIndex(-1);
