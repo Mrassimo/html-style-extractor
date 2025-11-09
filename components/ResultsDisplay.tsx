@@ -13,6 +13,8 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
   const [isDownloading, setIsDownloading] = useState(false);
   const [screenshotExpanded, setScreenshotExpanded] = useState<Record<number, boolean>>({});
   const [copied, setCopied] = useState(false);
+  const [analysisExpanded, setAnalysisExpanded] = useState(false);
+  const [cleanedHtmlExpanded, setCleanedHtmlExpanded] = useState(false);
   const textOnlyOutput = generateTextOnlyOutput(data);
   const { screenshots } = data;
 
@@ -150,34 +152,68 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
           )}
 
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
-              <h3 className="text-xl font-bold text-md-primary">
-                Design Analysis
-              </h3>
+            {/* Design Analysis Section */}
+            <div className="bg-md-white rounded-lg border border-md-border overflow-hidden">
+              <button
+                onClick={() => setAnalysisExpanded(!analysisExpanded)}
+                className="w-full flex items-center justify-between gap-2 p-6 hover:bg-md-bg-alt transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  <h3 className="text-xl font-bold text-md-primary">
+                    Design Analysis
+                  </h3>
+                </div>
+                <svg
+                  className={`w-5 h-5 text-md-muted transition-transform duration-300 ${analysisExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {analysisExpanded && (
+                <div className="border-t border-md-border p-6 bg-md-bg-alt">
+                  <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
+                    <code>{textOnlyOutput}</code>
+                  </pre>
+                </div>
+              )}
             </div>
 
-            <div className="bg-md-bg-alt rounded-lg border border-md-border p-6">
-              <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
-                <code>{textOnlyOutput}</code>
-              </pre>
-            </div>
-
-            <div className="flex items-center gap-2 mt-8">
-              <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
-              <h3 className="text-xl font-bold text-md-primary">
-                Cleaned HTML Output
-              </h3>
-            </div>
-
-            <div className="bg-md-bg-alt rounded-lg border border-md-border p-6">
-              <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
-                <code>{data.cleanHtml}</code>
-              </pre>
+            {/* Cleaned HTML Section */}
+            <div className="bg-md-white rounded-lg border border-md-border overflow-hidden">
+              <button
+                onClick={() => setCleanedHtmlExpanded(!cleanedHtmlExpanded)}
+                className="w-full flex items-center justify-between gap-2 p-6 hover:bg-md-bg-alt transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  <h3 className="text-xl font-bold text-md-primary">
+                    Cleaned HTML Output
+                  </h3>
+                </div>
+                <svg
+                  className={`w-5 h-5 text-md-muted transition-transform duration-300 ${cleanedHtmlExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {cleanedHtmlExpanded && (
+                <div className="border-t border-md-border p-6 bg-md-bg-alt">
+                  <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
+                    <code>{data.cleanHtml}</code>
+                  </pre>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
