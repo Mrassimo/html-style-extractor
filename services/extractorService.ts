@@ -1,4 +1,5 @@
 import { StyleData, Screenshot } from '../types';
+import { discoverImportantPages } from './pageDiscoveryService';
 
 const CORS_PROXY =
   (typeof import.meta !== 'undefined' &&
@@ -124,8 +125,20 @@ const getScreenshots = async (urls: string[]): Promise<Screenshot[]> => {
 export const extractAllStyles = async (urls: string[]): Promise<StyleData> => {
   const analysisUrl = urls[0];
 
+  // Automatically discover important pages for screenshots
+  let screenshotUrls: string[];
+  if (urls.length === 1) {
+    // Only main URL provided - discover additional pages automatically
+    console.log('🔍 Discovering important pages for automatic screenshots...');
+    screenshotUrls = await discoverImportantPages(analysisUrl);
+    console.log(`📸 Will screenshot ${screenshotUrls.length} pages:`, screenshotUrls.map(url => new URL(url).pathname));
+  } else {
+    // Multiple URLs provided manually - use as-is
+    screenshotUrls = urls;
+  }
+
   const htmlResponse = await fetch(`${CORS_PROXY}${encodeURIComponent(analysisUrl)}`);
-  const screenshots = await getScreenshots(urls);
+  const screenshots = await getScreenshots(screenshotUrls);
 
   if (!htmlResponse.ok) {
     throw new Error(`Failed to fetch URL: ${htmlResponse.statusText} (status: ${htmlResponse.status})`);
