@@ -9,8 +9,6 @@ import { extractAllStyles } from './services/extractorService';
 import { formatAsMarkdown } from './services/markdownFormatter';
 import { StyleData } from './types';
 
-type Tab = 'report' | 'prompts' | 'cleanedHtml';
-
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('Analyzing...');
@@ -18,7 +16,6 @@ const App: React.FC = () => {
   const [markdownResult, setMarkdownResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('report');
   const [hideExtractButton, setHideExtractButton] = useState<boolean>(false);
   const [lastAnalyzedUrl, setLastAnalyzedUrl] = useState<string>('');
 
@@ -34,7 +31,6 @@ const App: React.FC = () => {
     setNotification(null);
     setHideExtractButton(false);
     setLastAnalyzedUrl('');
-    setActiveTab('report');
   };
 
   const handleExtract = useCallback(async (urls: string[]) => {
@@ -43,7 +39,6 @@ const App: React.FC = () => {
     setStyleData(null);
     setMarkdownResult(null);
     setError(null);
-    setActiveTab('report');
 
     try {
       const data = await extractAllStyles(urls);
@@ -74,14 +69,54 @@ const App: React.FC = () => {
     }
   }, [lastAnalyzedUrl]);
 
-  const TabButton: React.FC<{tab: Tab, label: string}> = ({ tab, label }) => (
-      <button
-        onClick={() => setActiveTab(tab)}
-        className={`px-6 py-3 text-xs font-semibold uppercase tracking-wide transition-all duration-200 flex-1 sm:flex-none rounded-lg ${activeTab === tab ? 'bg-md-orange text-md-primary border-2 border-md-primary shadow-md-md-btn-primary' : 'bg-transparent text-md-muted hover:bg-md-white hover:text-md-primary hover:border hover:border-md-border-strong'}`}
-      >
-        {label}
-      </button>
-  );
+  const downloadAsZip = async () => {
+    if (!styleData || !markdownResult) return;
+
+    try {
+      // Dynamically import JSZip
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+
+      // Add files to zip
+      zip.file('analysis.md', markdownResult);
+      zip.file('cleaned.html', styleData.cleanHtml);
+
+      // Create CSS file from styles
+      const cssContent = styleData.styles
+        .map(style => `.${style.class} { ${style.declarations.join('; ')}; }`)
+        .join('\n\n');
+      zip.file('styles.css', cssContent);
+
+      // Generate and download
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'design-export.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showNotification('Design package downloaded!');
+    } catch (err) {
+      console.error('Failed to create zip', err);
+      showNotification('Download failed');
+    }
+  };
+
+  const copyAllContent = async () => {
+    if (!styleData || !markdownResult) return;
+
+    try {
+      const content = `${markdownResult}\n\n--- CLEANED HTML ---\n\n${styleData.cleanHtml}`;
+      await navigator.clipboard.writeText(content);
+      showNotification('All content copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy', err);
+      showNotification('Copy failed');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-md-bg text-md-primary font-sans antialiased">
@@ -112,59 +147,52 @@ const App: React.FC = () => {
           )}
           {styleData && markdownResult && (
             <div className="space-y-6">
-              <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-1">
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-1">
-                  <TabButton tab="report" label="Analysis Report" />
-                  <TabButton tab="cleanedHtml" label="Cleaned HTML Output" />
-                  <TabButton tab="prompts" label="AI Prompts" />
+              {/* Action Buttons */}
+              <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={downloadAsZip}
+                    className="flex items-center justify-center gap-2 bg-md-orange hover:bg-md-orange-focus text-md-primary font-bold text-[10px] uppercase tracking-wide py-2 px-6 rounded-lg border border-md-orange transition-all duration-200 shadow-md-btn-primary hover:shadow-md-btn-primary-hover hover:scale-105"
+                  >
+                    <span>⬇️ Download Package</span>
+                  </button>
+                  <button
+                    onClick={copyAllContent}
+                    className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-md-white font-bold text-[10px] uppercase tracking-wide py-2 px-6 rounded-lg border border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
+                  >
+                    <span>📋 Copy All</span>
+                  </button>
                 </div>
               </div>
 
-              {activeTab === 'report' && (
-                <ResultsDisplay
-                  data={styleData}
-                  onCopySuccess={() => showNotification('Copied complete analysis to clipboard!')}
-                />
-              )}
+              {/* Analysis Report */}
+              <ResultsDisplay
+                data={styleData}
+                onCopySuccess={() => showNotification('Copied complete analysis to clipboard!')}
+              />
 
-              {activeTab === 'cleanedHtml' && (
-                <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-6 space-y-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-xl font-bold text-md-primary">Cleaned HTML Output</h2>
-                      <p className="text-xs text-md-muted">
-                        Inline &lt;style&gt; tags and scripts stripped from body. Ready to pair with extracted CSS.
-                      </p>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (!styleData?.cleanHtml) return;
-                        try {
-                          await navigator.clipboard.writeText(styleData.cleanHtml);
-                          showNotification('Cleaned HTML copied to clipboard!');
-                        } catch (err) {
-                          console.error('Failed to copy cleaned HTML', err);
-                        }
-                      }}
-                      className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-md-white font-bold text-[10px] uppercase tracking-wide py-2 px-4 rounded-lg border border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
-                    >
-                      <span>Copy Cleaned HTML</span>
-                    </button>
-                  </div>
-                  <div className="bg-md-bg-alt rounded-lg border border-md-border p-4">
-                    <pre className="text-xs text-md-body whitespace-pre-wrap break-words overflow-auto max-h-[70vh] font-mono leading-relaxed">
-                      <code>{styleData.cleanHtml}</code>
-                    </pre>
+              {/* Cleaned HTML Output */}
+              <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border p-6 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-bold text-md-primary">Cleaned HTML Output</h2>
+                    <p className="text-xs text-md-muted">
+                      Inline &lt;style&gt; tags and scripts stripped from body. Ready to pair with extracted CSS.
+                    </p>
                   </div>
                 </div>
-              )}
+                <div className="bg-md-bg-alt rounded-lg border border-md-border p-4">
+                  <pre className="text-xs text-md-body whitespace-pre-wrap break-words overflow-auto max-h-[70vh] font-mono leading-relaxed">
+                    <code>{styleData.cleanHtml}</code>
+                  </pre>
+                </div>
+              </div>
 
-              {activeTab === 'prompts' && (
-                <PromptsGuide
-                  onCopySuccess={() => showNotification('Prompt copied!')}
-                  styleData={styleData}
-                />
-              )}
+              {/* AI Prompts Guide */}
+              <PromptsGuide
+                onCopySuccess={() => showNotification('Prompt copied!')}
+                styleData={styleData}
+              />
             </div>
           )}
         </main>
