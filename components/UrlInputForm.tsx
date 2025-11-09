@@ -19,6 +19,7 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
 
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const justSelectedRef = useRef<boolean>(false);
 
   // Load initial suggestions
   useEffect(() => {
@@ -49,6 +50,12 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
 
     // Notify parent component of URL change
     onUrlChange?.(value);
+
+    // Don't show suggestions if we just selected an item
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
 
     // Always show suggestions when typing, filter more aggressively
     let filtered;
@@ -85,13 +92,18 @@ export const UrlInputForm: React.FC<UrlInputFormProps> = ({ onSubmit, isLoading,
   };
 
   const handleSuggestionSelect = (suggestion: UrlSuggestion) => {
+    // Set flag to prevent reopening dropdown when URL changes
+    justSelectedRef.current = true;
+
     setUrl(suggestion.url);
     setShowSuggestions(false);
     setSelectedIndex(-1);
-    inputRef.current?.focus();
 
     // Notify parent component of URL change
     onUrlChange?.(suggestion.url);
+
+    // Keep focus on input so user can immediately submit or type
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
