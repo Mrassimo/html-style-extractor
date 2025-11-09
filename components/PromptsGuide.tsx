@@ -1,8 +1,10 @@
 import React from 'react';
 import { CopyIcon } from './icons';
+import { generateContextualPrompts } from '../services/promptGenerator';
 
 interface PromptsGuideProps {
   onCopySuccess: () => void;
+  styleData?: any; // Make styleData optional for backward compatibility
 }
 
 const PromptCard: React.FC<{ title: string; description: string; prompt: string; onCopy: (text: string) => void; children?: React.ReactNode }> = ({ title, description, prompt, onCopy, children }) => {
@@ -38,7 +40,7 @@ const PromptCard: React.FC<{ title: string; description: string; prompt: string;
 };
 
 
-export const PromptsGuide: React.FC<PromptsGuideProps> = ({ onCopySuccess }) => {
+export const PromptsGuide: React.FC<PromptsGuideProps> = ({ onCopySuccess, styleData }) => {
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {
             onCopySuccess();
@@ -47,7 +49,8 @@ export const PromptsGuide: React.FC<PromptsGuideProps> = ({ onCopySuccess }) => 
         });
     };
 
-    const prompts = {
+    // Use contextual prompts if styleData is available, otherwise fall back to generic prompts
+    const prompts = styleData ? generateContextualPrompts(styleData) : {
         prompt1: `Help me rebuild the exact same UI design as a single HTML file.
 
 The attached report contains the extracted CSS, HTML structure, and screenshots from multiple pages. Focus on capturing:
@@ -107,9 +110,9 @@ Make sure it follows ALL the style guidelines exactly.`
             </div>
 
             <div className="space-y-6">
-                <PromptCard title="Step 1: Create Initial Page" description="Use the 'Analysis Report' tab for this. The full report provides the best context for the AI." prompt={prompts.prompt1} onCopy={handleCopy} />
-                <PromptCard title="Step 2: Generate a Style Guide" description="Once the replication is accurate, have the AI document the design system." prompt={prompts.prompt2} onCopy={handleCopy} />
-                <PromptCard title="Step 3: Use Your Style Guide" description="Create new pages and components that are consistent with the original design." prompt={prompts.prompt3} onCopy={handleCopy} />
+                <PromptCard title="Step 1: Create Initial Page" description="Use the 'Copy All' button from the Analysis Report tab to get the complete data, then use this prompt." prompt={styleData ? prompts.step1 : prompts.prompt1} onCopy={handleCopy} />
+                <PromptCard title="Step 2: Generate a Style Guide" description="Once the replication is accurate, have the AI document the design system using this contextual prompt." prompt={styleData ? prompts.step2 : prompts.prompt2} onCopy={handleCopy} />
+                <PromptCard title="Step 3: Use Your Style Guide" description="Create new pages and components that are consistent with the original design system." prompt={styleData ? prompts.step3 : prompts.prompt3} onCopy={handleCopy} />
             </div>
 
             <div className="bg-md-yellow border border-md-orange rounded-lg p-6 text-center">

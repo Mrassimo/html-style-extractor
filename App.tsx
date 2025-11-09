@@ -48,7 +48,7 @@ const App: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       let detailedError = `Extraction failed: ${errorMessage}.`;
       if (errorMessage.toLowerCase().includes('failed to fetch')) {
-          detailedError += ' This might be due to a network issue, the CORS proxy not working, or the target website blocking requests. Please check your connection and try again or use a different URL.';
+          detailedError += ' This might be due to an incorrect URL, network issue, the CORS proxy not working, or the target website blocking requests. Please check your input, connection and try again or use a different URL.';
       }
       setError(detailedError);
       showNotification('Analysis failed!');
@@ -115,7 +115,7 @@ const App: React.FC = () => {
                         onCopySuccess={() => showNotification('Copied complete analysis to clipboard!')} />
                 )}
                 {activeTab === 'prompts' && (
-                    <PromptsGuide onCopySuccess={() => showNotification('Prompt copied!')} />
+                    <PromptsGuide onCopySuccess={() => showNotification('Prompt copied!')} styleData={styleData} />
                 )}
             </div>
           )}
@@ -123,7 +123,6 @@ const App: React.FC = () => {
         <footer className="mt-20 pt-12 border-t border-md-border">
           <div className="text-center">
             <p className="text-md-muted text-sm">HTML Style Extractor for LLMs. All processing is done locally in your browser.</p>
-            <p className="text-md-muted text-xs mt-2">Styled with MotherDuck design system</p>
           </div>
         </footer>
       </div>
