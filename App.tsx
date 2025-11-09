@@ -133,7 +133,7 @@ const App: React.FC = () => {
                     <div>
                       <h2 className="text-xl font-bold text-md-primary">Cleaned HTML Output</h2>
                       <p className="text-xs text-md-muted">
-                        Inline <style> tags and scripts stripped from body. Ready to pair with extracted CSS.
+                        Inline &lt;style&gt; tags and scripts stripped from body. Ready to pair with extracted CSS.
                       </p>
                     </div>
                     <button
