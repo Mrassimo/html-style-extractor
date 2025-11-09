@@ -90,25 +90,30 @@ const createMockScreenshot = (url: string, isVercelLimitation = false): Screensh
     ? 'Screenshots temporarily unavailable on Vercel'
     : 'Development mode - screenshots work in production';
 
+  const svgContent = `
+    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="630" fill="#f3f4f6"/>
+      <rect x="50" y="50" width="1100" height="530" fill="white" stroke="#e5e7eb" stroke-width="2" rx="8"/>
+      <text x="600" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#374151">
+        Design System Analysis
+      </text>
+      <text x="600" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#6b7280">
+        ${pathname}
+      </text>
+      <text x="600" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">
+        ${message}
+      </text>
+      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#9ca3af">
+        (Design system extraction works perfectly)
+      </text>
+    </svg>
+  `.trim();
+
+  // Use a safer encoding method that handles Unicode characters
+  const encodedSvg = btoa(unescape(encodeURIComponent(svgContent)));
+
   return {
-    url: `data:image/svg+xml;base64,${btoa(`
-      <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-        <rect width="1200" height="630" fill="#f3f4f6"/>
-        <rect x="50" y="50" width="1100" height="530" fill="white" stroke="#e5e7eb" stroke-width="2" rx="8"/>
-        <text x="600" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#374151">
-          ${isVercelLimitation ? '🚫' : '📸'} Design System Analysis
-        </text>
-        <text x="600" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#6b7280">
-          ${pathname}
-        </text>
-        <text x="600" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">
-          ${message}
-        </text>
-        <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#9ca3af">
-          (Design system extraction works perfectly)
-        </text>
-      </svg>
-    `)}`,
+    url: `data:image/svg+xml;base64,${encodedSvg}`,
     label: `Full Page: ${pathname}${isVercelLimitation ? ' (Screenshot unavailable)' : ''}`
   };
 };
