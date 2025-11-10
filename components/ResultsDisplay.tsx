@@ -14,7 +14,6 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
   const [screenshotExpanded, setScreenshotExpanded] = useState<Record<number, boolean>>({});
   const [copied, setCopied] = useState(false);
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
-  const [cleanedHtmlExpanded, setCleanedHtmlExpanded] = useState(false);
   const textOnlyOutput = generateTextOnlyOutput(data);
   const { screenshots } = data;
 
@@ -61,20 +60,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
 
   return (
     <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border overflow-hidden">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-6 bg-md-white border-b border-md-border gap-4">
-        <h2 className="text-2xl font-bold text-md-primary">Complete Design System Analysis</h2>
-      </div>
-
       <div className="p-6 sm:p-8">
           {screenshots.length > 0 && (
               <div className="mb-10">
-                  <h3 className="text-xl font-bold text-md-primary mb-6 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Page Screenshots
-                  </h3>
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {screenshots.map((shot, index) => {
                         const isExpanded = !!screenshotExpanded[index];
                         return (
@@ -152,7 +141,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
           )}
 
           <div className="space-y-6">
-            {/* Design Analysis Section */}
+            {/* Output Section - Consolidated */}
             <div className="bg-md-white rounded-lg border border-md-border overflow-hidden">
               <button
                 onClick={() => setAnalysisExpanded(!analysisExpanded)}
@@ -163,7 +152,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                   </svg>
                   <h3 className="text-xl font-bold text-md-primary">
-                    Design Analysis
+                    Output
                   </h3>
                 </div>
                 <svg
@@ -180,38 +169,15 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                   <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
                     <code>{textOnlyOutput}</code>
                   </pre>
-                </div>
-              )}
-            </div>
-
-            {/* Cleaned HTML Section */}
-            <div className="bg-md-white rounded-lg border border-md-border overflow-hidden">
-              <button
-                onClick={() => setCleanedHtmlExpanded(!cleanedHtmlExpanded)}
-                className="w-full flex items-center justify-between gap-2 p-6 hover:bg-md-bg-alt transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-md-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                  <h3 className="text-xl font-bold text-md-primary">
-                    Cleaned HTML Output
-                  </h3>
-                </div>
-                <svg
-                  className={`w-5 h-5 text-md-muted transition-transform duration-300 ${cleanedHtmlExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {cleanedHtmlExpanded && (
-                <div className="border-t border-md-border p-6 bg-md-bg-alt">
-                  <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
-                    <code>{data.cleanHtml}</code>
-                  </pre>
+                  {data.cleanHtml && (
+                    <>
+                      <div className="my-6 border-t border-md-border"></div>
+                      <h4 className="text-md font-semibold text-md-primary mb-3">Cleaned HTML</h4>
+                      <pre className="text-sm text-md-body whitespace-pre-wrap break-words font-mono leading-relaxed">
+                        <code>{data.cleanHtml}</code>
+                      </pre>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -245,21 +211,11 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data, onCopySucc
                   <button
                     onClick={() => handleCopyText(textOnlyOutput)}
                     className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
-                    title="Copy Analysis"
+                    title="Copy Text"
                   >
                     <CopyIcon />
-                    <span>Copy Analysis</span>
+                    <span>Copy Text</span>
                   </button>
-                  {data.generatedInlineCss && (
-                    <button
-                      onClick={() => handleCopyText(data.generatedInlineCss)}
-                      className="flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
-                      title="Copy Generated CSS Classes"
-                    >
-                      <CopyIcon />
-                      <span>Copy CSS Classes</span>
-                    </button>
-                  )}
                   {copied && (
                     <span className="text-[10px] text-md-green font-semibold">
                       Copied!
