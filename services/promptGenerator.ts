@@ -332,7 +332,7 @@ ${data.cssVariables.slice(0, 15).map(([name, value]) => `${name}: ${value}`).joi
 
 ## 📋 HTML Structure
 \`\`\`html
-${data.cleanHtml.slice(0, 2000)}${data.cleanHtml.length > 2000 ? '\n... (truncated for brevity)' : ''}
+${data.cleanHtml}
 \`\`\``;
 };
 

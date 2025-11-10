@@ -181,7 +181,7 @@ const App: React.FC = () => {
         </main>
         <footer className="mt-20 pt-12 border-t border-md-border">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-md-muted">
-            <p>Style Extractor. All processing is done locally in your browser.</p>
+            <p>Style Extractor. CSS analysis is processed locally in your browser.</p>
             <div className="flex items-center gap-3">
               <button
                 onClick={handleClearAll}

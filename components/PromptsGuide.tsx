@@ -1,13 +1,13 @@
 import React from 'react';
 import { CopyIcon } from './icons';
-import { generateContextualPrompts } from '../services/promptGenerator';
+import { generateContextualPrompts, generateTextOnlyOutput } from '../services/promptGenerator';
 
 interface PromptsGuideProps {
   onCopySuccess: () => void;
   styleData?: any; // Make styleData optional for backward compatibility
 }
 
-const PromptCard: React.FC<{ title: string; description: string; prompt: string; onCopy: (text: string) => void; children?: React.ReactNode }> = ({ title, description, prompt, onCopy, children }) => {
+const PromptCard: React.FC<{ title: string; description: string; prompt: string; onCopy: (text: string) => void; children?: React.ReactNode; copyText?: string }> = ({ title, description, prompt, onCopy, children, copyText }) => {
     return (
         <div className="bg-md-white rounded-lg shadow-md-md-soft border border-md-border mb-6 overflow-hidden hover:shadow-md-md-btn-primary transition-all duration-300">
             <div className="p-6 bg-md-bg-alt border-b border-md-border">
@@ -27,7 +27,7 @@ const PromptCard: React.FC<{ title: string; description: string; prompt: string;
                 </div>
                 {children}
                 <button
-                    onClick={() => onCopy(prompt)}
+                    onClick={() => onCopy(copyText || prompt)}
                     className="w-full flex items-center justify-center gap-2 bg-md-blue hover:bg-md-blue-focus text-md-white font-bold text-xs uppercase tracking-wide py-3 px-6 rounded-lg border-2 border-md-blue transition-all duration-200 shadow-md-btn-secondary hover:shadow-md-btn-secondary-hover hover:scale-105"
                     title="Copy Prompt"
                 >
@@ -81,6 +81,11 @@ Save as "new-page.html"
 Make sure it follows ALL the style guidelines exactly.`
     };
 
+    // For Step 1, include the full analysis text when copying
+    const step1CopyText = styleData
+        ? `${prompts.step1}\n\n---\n\n# Complete Design System Analysis\n\n${generateTextOnlyOutput(styleData)}\n\n---\n\n# Cleaned HTML\n\n\`\`\`html\n${styleData.cleanHtml}\n\`\`\``
+        : prompts.prompt1;
+
     return (
         <div className="space-y-6">
             <h2 className="text-2xl font-bold text-md-primary flex items-center gap-2">
@@ -91,7 +96,7 @@ Make sure it follows ALL the style guidelines exactly.`
             </h2>
 
             <div className="space-y-6">
-                <PromptCard title="Step 1: Create Initial Page" description="" prompt={styleData ? prompts.step1 : prompts.prompt1} onCopy={handleCopy} />
+                <PromptCard title="Step 1: Create Initial Page" description="" prompt={styleData ? prompts.step1 : prompts.prompt1} onCopy={handleCopy} copyText={step1CopyText} />
                 <PromptCard title="Step 2: Generate a Style Guide" description="" prompt={styleData ? prompts.step2 : prompts.prompt2} onCopy={handleCopy} />
                 <PromptCard title="Step 3: Use Your Style Guide" description="" prompt={styleData ? prompts.step3 : prompts.prompt3} onCopy={handleCopy} />
             </div>
